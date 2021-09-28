@@ -6,7 +6,7 @@
 /*   By:  <mashad@student.1337.ma>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/26 08:26:13 by                   #+#    #+#             */
-/*   Updated: 2021/09/27 12:38:37 by                  ###   ########.fr       */
+/*   Updated: 2021/09/27 11:14:40 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,14 +139,14 @@ class INKCONFIGPARSER
 							if (line.find("port=") == std::string::npos){
 								throw INKCONFIGPARSER::FileParsingError();
 							}
-							this->_inkweConfig[ServersCounter].setPort(std::stoi(line.substr(5, line.length() - 1)));
+							this->_inkweConfig[ServersCounter].setPort(std::atoi(std::strtok(&line[5], ";")));
 							break ;
 						}
 						case 'd' : {
 							if (line.find("default_error_pages=") == std::string::npos){
 								throw INKCONFIGPARSER::FileParsingError();
 							}
-							this->_inkweConfig[ServersCounter].setDefaultErrorPage(line.substr(20, line.length() - 1));
+							this->_inkweConfig[ServersCounter].setDefaultErrorPage(std::strtok(&line[5], ";"));
 							break ;
 						}
 						case 'b': {
@@ -160,8 +160,7 @@ class INKCONFIGPARSER
 							if (line.find("location=") == std::string::npos){
 								throw INKCONFIGPARSER::FileParsingError();
 							}
-							if (!this->_inkweConfig[ServersCounter].getInkLocation()[LocationsCounter++].ParseInkLocation(line.substr(9, line.find(';'))))
-								throw INKCONFIGPARSER::FileParsingError();
+							this->_inkweConfig[ServersCounter].getInkLocation()[LocationsCounter++].ParseInkLocation(line.substr(8, line.length()));
 							break ;
 						}
 					}

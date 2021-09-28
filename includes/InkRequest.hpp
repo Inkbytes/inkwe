@@ -6,7 +6,7 @@
 /*   By:  <>                                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2021/09/27 11:34:06 by                  ###   ########.fr       */
+/*   Updated: 2021/09/22 14:44:27 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,43 +21,20 @@
 # define HTTP_HEAD		"HEAD"	/* The HTTP HEAD method requests the headers that would be returned if the HEAD request's URL was instead requested with the HTTP GET method. For example, if a URL might produce a large download, a HEAD request could read its Content-Length header to check the filesize without actually downloading the file. */
 # define HTTP_DELETE	"DELETE" /* The HTTP DELETE request method deletes the specified resource. */
 
-#include <iostream>
-
-#include <map>
-#include <vector>
-#include <iterator>
-
-class request
+class Request
 {
 	private:
-		std::string _method;
-		std::map<std::string, std::string> _details;
+        std::map<std::string, std::string>	Request;
 
+		Request ( void );
 	public:
-		request(std::vector<std::string> myVec, std::string method) {
-			parseRequest(myVec, method);
-		}
-		~request(void) {}
-		void parseRequest(std::vector<std::string> myVec, std::string method)
-		{
-			_method = method;
-			std::map<std::string, std::string>::iterator mite = _details.end();
-			std::vector<std::string>::iterator ite = myVec.end();
-			// parse every details of the request into a map with akey and value
-			for (std::vector<std::string>::iterator it = myVec.begin(); it != ite; it++)
-				split(*it, ": ");
-			std::cout << "Method  " << _method << std::endl;
-			for(std::map<std::string, std::string>::iterator it = _details.begin(); it != mite; it++)
-				std::cout << "key " << it->first << "        value " << it->second << std::endl;
-		}
-	private:
-		void split(std::string text, std::string dilemitter)
-		{
-			size_t pos = text.find(dilemitter);
-			std::string token = text.substr(0, pos);
-			std::string token1 = text.substr(pos + 2, text.length());
-			_details.insert(std::pair<std::string, std::string>(token, token1));
-		}
+		Request( std::string const &method );
+		Request( Request const & );
+		~Request( void );
+		
+		Request 	&operator=( Request const &);
+		std::string const &getParsedRequest( void ) const;
+
 };
 
 #endif

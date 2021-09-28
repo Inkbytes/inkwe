@@ -6,7 +6,7 @@
 /*   By:  <mashad@student.1337.ma>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/26 10:03:55 by                   #+#    #+#             */
-/*   Updated: 2021/09/27 13:16:34 by                  ###   ########.fr       */
+/*   Updated: 2021/09/28 08:42:21 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,8 @@ class INKLOCATION {
 			std::stringstream	data(rawData);
 			std::string			line;
 
-			if (rawData.find("{") == std::string::npos || rawData.find("};") == std::string::npos)
+			std::cout << rawData << std::endl;
+			if (rawData[0] != '{' )
 				return (false);
 			while (std::getline(data, line, ',')){
 				std::cout << line << std::endl;
