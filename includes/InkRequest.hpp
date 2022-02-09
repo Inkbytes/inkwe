@@ -1,40 +1,146 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   request.hpp                                        :+:      :+:    :+:   */
+/*   InkRequest.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By:  <>                                        +#+  +:+       +#+        */
+/*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2021/09/22 14:44:27 by                  ###   ########.fr       */
+/*   Updated: 2022/02/09 08:43:46 by mashad           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef REQUEST_HPP
-# define REQUEST_HPP
+#pragma once
 
 # include <iostream>
+# include <map>
+# include <vector>
+# include <iterator>
 
-// ALLOWED HTTP METHODS
-# define HTTP_GET		"GET"	/* The HTTP GET method requests a representation of the specified resource. Requests using GET should only be used to request data (they shouldn't include data). */
-# define HTTP_POST		"POST"	/* The HTTP POST method sends data to the server. The type of the body of the request is indicated by the Content-Type header. */
-# define HTTP_HEAD		"HEAD"	/* The HTTP HEAD method requests the headers that would be returned if the HEAD request's URL was instead requested with the HTTP GET method. For example, if a URL might produce a large download, a HEAD request could read its Content-Length header to check the filesize without actually downloading the file. */
-# define HTTP_DELETE	"DELETE" /* The HTTP DELETE request method deletes the specified resource. */
-
-class Request
+class request
 {
 	private:
-        std::map<std::string, std::string>	Request;
+		std::string _method;
+		std::string _serverProtocol;
+		std::string _path;
+		std::string _query;
+		std::string _clientIp;
+		std::string _scriptName;
+		std::map<std::string, std::string> _details;
 
-		Request ( void );
 	public:
-		Request( std::string const &method );
-		Request( Request const & );
-		~Request( void );
+		request(std::string clientIp) : _clientIp(clientIp) { }
+		~request(void) {}
+		std::pair<std::string, int> parseRequest(std::vector<std::string> myVec, std::string method, INKSERVERCONFIG conf)
+		{
+			method.erase(method.find('\r'));
+			splitMethod(method);
+			int pos = splitPath(_path, conf);
+			std::vector<std::string>::iterator ite = myVec.end();
+			std::vector<std::string>::iterator it = myVec.begin();
+			if (conf.getInkLocation()[pos].getMethod() != _method)
+				return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", -1));
+			// parse every details of the request into a map with akey and value
+			for (; it != ite; it++)
+			{
+				if ((*it).find(": ") == std::string::npos)
+				{
+					it++;
+					break ;
+				}
+				else
+				{
+					(*it).erase((*it).find('\r'));
+					split(*it, ": ");
+				}
+			}
+			// set POST body
+			if (_query.length()==0 && it != ite && _method == "POST")
+				for (;it!=ite;it++)
+					_query+= *it;
+			return (std::make_pair("200", pos));
+		}
 		
-		Request 	&operator=( Request const &);
-		std::string const &getParsedRequest( void ) const;
+		// geters for class attributes
+		std::string getMethod( void ) const {
+			return (_method);
+		}
+		std::string getPath( void ) const {
+			return (_path);
+		}
+		std::string getServerProtocol( void ) const {
+			return (_serverProtocol);
+		}
+		std::string getQuery( void ) const {
+			return (_query);
+		}
+		std::string	getClientIp( void ) const {
+			return (_clientIp);
+		}
+		std::string getScriptName( void ) const {
+			return (_scriptName);
+		}
+		std::map<std::string, std::string> getDetails( void ) const {
+			return (_details);
+		}
+	
+	//private methods
+	private:
+		void split(std::string text, std::string dilemitter)
+		{
+			size_t pos = text.find(dilemitter);
+			std::string token = text.substr(0, pos);
+			std::string token1 = text.substr(pos + 2, text.length());
+			_details.insert(std::pair<std::string, std::string>(token, token1));
+		}
+		void splitMethod(std::string method)
+		{
+			size_t pos = method.find(" ");
+			_method = method.substr(0, pos);
+			method.erase(0, pos + 1);
+			pos = method.find(" ");
+			_path = method.substr(0, pos);
+			method.erase(0, pos);
+			_serverProtocol = method.substr(0, method.length());
+		}
+		int splitPath(std::string path, INKSERVERCONFIG conf)
+		{
+			int pos = 0;
+			std::string p = path;
+			int ret = 0;
 
+			// set GET querry
+			if ((pos = path.find("?")) > 0)
+			{
+				_query = path.substr(pos + 1, path.length());
+				path.erase(pos, path.length());
+				p=path;
+			}
+			
+			while (path.find("/") != std::string::npos)
+			{
+				_path = path;
+				for (int i = 0; i <conf.getLocationsCount(); i++)
+				{
+					if (conf.getInkLocation()[i].getLocation() == "/")
+						ret = i;
+					if (conf.getInkLocation()[i].getLocation() == _path && conf.getInkLocation()[i].getMethod() == _method)
+					{
+						_scriptName = p.substr(_path.length(), p.length());
+						if (_scriptName == "/")
+							_scriptName = "";
+						else if (_scriptName.find("/") != std::string::npos)
+							_scriptName = _scriptName.substr(_scriptName.find("/")+1,_scriptName.length());
+						return (i);
+					}
+				}
+				if (path.find_first_of("/") == path.find_last_of("/"))
+					path = "/";
+				else
+					path = path.substr(0,path.find_last_of("/"));
+			}
+			_path = "/";
+			_scriptName = p.substr(p.find("/")+1, p.length());
+			return (ret);
+		}
 };
-
-#endif

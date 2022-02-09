@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   InkServerConfig.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By:  <mashad@student.1337.ma>                  +#+  +:+       +#+        */
+/*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/26 10:03:55 by                   #+#    #+#             */
-/*   Updated: 2021/09/28 08:42:21 by                  ###   ########.fr       */
+/*   Updated: 2022/02/09 08:45:48 by mashad           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 
 # include <iostream>
 # include <string>
+# include "webserv.hpp"
 
 class INKLOCATION {
 	private:
@@ -34,6 +35,24 @@ class INKLOCATION {
 		~INKLOCATION( void )
 		{
 			return ;
+		}
+		bool 			findLocation(std::string const path)
+		{
+			if (_location == path)
+				return (1);
+			return (0);
+		}
+		std::string 	getLocation( void ) const {
+			return (this->_location);
+		}
+		std::string 	getMethod( void ) const {
+			return (this->_method);
+		}
+		std::string 	getRoot( void ) const {
+			return (this->_root);
+		}
+		bool 			getAutoIndex( void ) const {
+			return (this->_autoIndex);
 		}
 		void 	setLocation(std::string const &location) {
 			this->_location = location;
@@ -55,12 +74,53 @@ class INKLOCATION {
 			std::stringstream	data(rawData);
 			std::string			line;
 
-			std::cout << rawData << std::endl;
-			if (rawData[0] != '{' )
+			if (rawData.find('{') == std::string::npos || rawData.find("};") == std::string::npos)
 				return (false);
+//			rawData.erase(std::remove_if(rawData.begin(), rawData.end(), isspace), rawData.end());
+			data.clear();
+			rawData.replace(rawData.find('}'), 2, ",");
+			rawData = rawData.substr(2, rawData.length());
+			data.str(rawData);
 			while (std::getline(data, line, ',')){
-				std::cout << line << std::endl;
+				switch (line[0])
+				{
+					case 'p':
+					{
+						if (line.find("path=") == std::string::npos)
+							return (false);
+						this->setLocation(line.substr(line.find('=') + 1, line.length()));
+						break ;
+					}
+					case 'm': {
+						if (line.find("method=") == std::string::npos) {
+							return (false);
+						}
+						this->setMethod(line.substr(line.find('=') + 1, line.length()));
+						break ;
+					}
+					case 'r': {
+						if (line.find("root=") == std::string::npos) {
+							return (false);
+						}
+						this->setRoot(line.substr(line.find('=') + 1, line.length()));
+						break ;
+					}
+					case 'a': {
+						if (line.find("autoindex=") == std::string::npos){
+							return (false);
+						}
+						this->_autoIndex = (line.substr(line.find("=") + 1, line.length()) == "on");
+						break ;
+					}
+					default : return (false);
+				}
 			}
+			return (true);
+		}
+		bool 		checkLocationDefaultValues() const {
+//			std::cout << "location: " << this->_location << " method: " << this->_method << " root: " << this->_root << " autoindex: " << this->_autoIndex << std::endl;
+			if (this->_location.empty() || this->_method.empty() || this->_root.empty())
+					return (false);
 			return (true);
 		}
 };
@@ -77,14 +137,16 @@ class INKSERVERCONFIG {
 
 	public:
 		INKSERVERCONFIG( void ){
+			this->_serverName = "";
 			this->_host = "";
 			this->_port = 0;
 			this->_bodySizeLimit = 0;
 			this->_defaultErrorPage = "pages/";
 			this->_locationsCount = 0;
+			this->_inkLocations = NULL;
 			return ;
 		}
-		INKSERVERCONFIG( INKSERVERCONFIG const &COPY ) : _port(), _bodySizeLimit(), _inkLocations() {
+		INKSERVERCONFIG( INKSERVERCONFIG const &COPY ) : _port(COPY.getPort()), _bodySizeLimit(COPY.getBodySizeLimit()){
 			*this = COPY;
 			return ;
 		}
@@ -136,8 +198,19 @@ class INKSERVERCONFIG {
 			this->_locationsCount = locationsCount;
 		}
 		void 			setInkLocations(size_t locationCount){
+			this->_locationsCount = locationCount;
 			this->_inkLocations = new INKLOCATION[locationCount];
 			return ;
 		}
+		bool 			checkDefaultValues() const {
+//			std::cout << "host: " << this->_host << " port: " << this->_port << " bodysizeLimit: " << this->_bodySizeLimit << " locations: " << this->_locationsCount << std::endl;
+			if (this->_host.empty() || this->_port == 0 || this->_bodySizeLimit == 0 || this->_locationsCount == 0)
+				return (false);
+			return (true);
+		}
 };
 #endif
+
+//     args["REQUEST_URI"] = _removeQueryArgs(_request.getRequestLine()._request_target);
+
+//     args["SCRIPT_FILENAME"] = _ressource_path;
