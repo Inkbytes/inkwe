@@ -16,15 +16,6 @@
 # include "webserv.hpp"
 # include "InkServerConfig.hpp"
 
-//----- // Define Marcos for general use
-
-# define DEFAULT_CONFIG_PATH 	"config/default.conf"
-# define DEFAULT_PORT			80
-# define DEFAULT_ROOT_DIRECTIVE "www"
-# define DEFAULT_404_PAGE       "pages/404.html"
-# define DEFAULT_501_PAGE       "pages/501.html"
-# define DEFAULT_500_PAGE       "pages/500.html"
-
 /** @Brief ft namespace
  * Namespace includes all classes needed to realise this project
  */
@@ -153,7 +144,7 @@ namespace ft {
 		 * @param COPY Already construct ConfigParsing class
 		 * @return none;
 		 */
-		ConfigParsing (ConfigParsing const &COPY) {
+		ConfigParsing (ConfigParsing const &COPY) : _serversCount(0) {
 			*this = COPY;
 		}
 

@@ -31,15 +31,15 @@ class InkRespond {
 		size_t		_cgi;
 
 	public:
-		InkRespond(ft::ServerConfig conf, request req, std::pair<std::string, int> a) :_err(0),_cgi(0){
-			// check if its a valid request nethod
+		InkRespond(const ft::ServerConfig& conf, const ft::request& req, const std::pair<std::string, int>& a) :_err(0),_cgi(0){
+			// check if it's a valid request method
 			std::string file;
 			if (a.first == "200")
 			{
 				if (req.getScriptName().length() == 0)
-					file = conf.getInkLocation()[a.second].getRoot() + "/";
+					file = conf.getLocations()[a.second].getRoot() + "/";
 				else	
-					file = conf.getInkLocation()[a.second].getRoot() + "/"+ req.getScriptName();
+					file = conf.getLocations()[a.second].getRoot() + "/"+ req.getScriptName();
 				if (req.getMethod()!= "GET" && req.getMethod()!= "POST" && req.getMethod()!= "DELETE")
 				{
 					_status="501";
@@ -47,7 +47,7 @@ class InkRespond {
 					_err = 1;
 				}
 	
-				// check if its a valid protocol version
+				// check if it's a valid protocol version
 				else if (!req.getServerProtocol().compare("HTTP/1.1"))
 				{
 					_status = "405";
@@ -73,7 +73,7 @@ class InkRespond {
 					&& (req.getMethod()=="GET" || req.getMethod()=="POST"))
 				{
 					std::pair<std::string,std::string> p;
-					InkCgi cgi(req, conf);
+					ft::InkCgi cgi(req, conf.getLocations()[a.second]);
 					p = cgi.execCgi(req);
 					_status = p.first;
 					_ret = p.second;
@@ -106,20 +106,20 @@ class InkRespond {
 			}
 		}
 
-		// Coocking respond
-		std::pair<std::string, std::streampos> SetRespond(request req, ft::ServerConfig conf, std::map<std::string,std::string> types, int locationPos)
+		// Cooking respond
+		std::pair<std::string, std::streampos> SetRespond(const ft::request& req, const ft::ServerConfig& conf, std::map<std::string,std::string> types, int locationPos)
 		{
-			std::string opn;
-			std::string ext;
-			std::string scriptname;
-			std::vector<std::string> _headers;
-			std::streampos size;
-			std::string filePath;
-			std::pair<std::string, bool> Autoindex;
+			std::string                     opn;
+			std::string                     ext;
+			std::string                     scriptname;
+			std::vector<std::string>        _headers;
+			std::streampos                  size;
+			std::string                     filePath;
+			std::pair<std::string, bool>    Autoindex;
 			
 			if(locationPos != -1)
 			{
-				Autoindex = check_autoIndex(req.getPath() + "/" + req.getScriptName() ,conf.getLocations()[locationPos].getRoot()+"/" +req.getScriptName(), conf.getInkLocation()[locationPos]);;
+				Autoindex = check_autoIndex(req.getPath() + "/" + req.getScriptName() ,conf.getLocations()[locationPos].getRoot()+"/" +req.getScriptName(), conf.getLocations()[locationPos]);;
 				if (req.getPath() == "/" && _status == "index.html")
 					filePath = conf.getLocations()[locationPos].getRoot() +"/"+_status;
 				else
@@ -172,15 +172,14 @@ class InkRespond {
 					f.close();
 				}
 			}
-			// std::cout << _ret << std::endl;
 			return (std::make_pair(_ret, size));
 		}
-		std::pair<std::string, bool>	check_autoIndex(std::string urlPath, std::string path, ft::Location location)
+		std::pair<std::string, bool>	check_autoIndex(const std::string& urlPath, const std::string& path, const ft::Location& location)
 		{
 			if (location.getAutoIndex())
 			{
 				ft::AutoIndex aut(urlPath, path);
-				if (opendir(path.c_str()) != NULL)
+				if (opendir(path.c_str()) != nullptr)
 				{
 					return(std::make_pair(aut.baseHref(), 1));
 				}

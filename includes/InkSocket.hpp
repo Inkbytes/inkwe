@@ -70,7 +70,7 @@ namespace ft {
 			 * @param port, ipaddress
 			 * @return none
 			 */
-			Socket( char const *ip_addr, uint port, INKSERVERCONFIG &serverConfig) : _socketsd(0), _clientsd(vector(0, 0)),  _ipaddr(ip_addr), _port(port), _serverConfig(serverConfig){
+			Socket( char const *ip_addr, uint port, ft::ServerConfig &serverConfig) : _socketsd(0), _clientsd(vector(0, 0)),  _ipaddr(ip_addr), _port(port), _serverConfig(serverConfig){
 				// TO-DO: Initialize all attributes 
 				std::memset(&_address, 0, sizeof(_address));
 				std::memset(&_address.sin_zero, 0, sizeof(_address.sin_zero));

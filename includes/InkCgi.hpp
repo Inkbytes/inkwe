@@ -36,20 +36,20 @@ namespace  ft {
 		std::string scriptName;
 
 	public:
-		InkCgi(request req, ft::ServerConfig serverConf)
+		InkCgi(request req, ft::Location serverConf)
 		{
 			if (req.getPath() == "/")
-				scriptName = serverConf. + req.getPath()+req.getScriptName();
+				scriptName = serverConf.getRoot() + req.getPath()+req.getScriptName();
 			else
 				scriptName = serverConf.getRoot() + req.getPath()+ "/" + req.getScriptName();
-			init_env(req, serverConf);
+			init_env(req);
 		}
 		~InkCgi()
 		{
 
 		}
 
-		void init_env(request req, ft::ServerConfig serverConf)
+		void init_env(request req)
 		{
 			// if ((req.getDetails().find("Content-Length")) != req.getDetails().end()){std::cout << req.getDetails().find("Content-Length")->second << "WELL F\n";
 			//     setenv("CONTENT_LENGTH", (req.getDetails().find("Content-Length"))->second.c_str(), 1);}
