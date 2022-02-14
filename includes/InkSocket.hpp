@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/11 12:51:54 by f0rkr             #+#    #+#             */
-/*   Updated: 2022/02/09 08:46:00 by mashad           ###   ########.fr       */
+/*   Updated: 2022/02/14 13:54:49 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ namespace ft {
 			char const			*_ipaddr; 	// Ip address
 			uint const			_port;		// Port
 			sockaddrs			_address; 	// Internet Address
-			INKSERVERCONFIG		_serverConfig; // Server configuration
+			ft::ServerConfig		_serverConfig; // Server configuration
 			char				buffer[1024];
 			/** @brief Default constructor
 			 * Is made private because there's no use for it
@@ -113,7 +113,7 @@ namespace ft {
 			vector				getClients( void ) const { return (_clientsd); }
 			string				getIpaddr( void ) const { return (string(_ipaddr)); }
 			uint				getPort( void ) const { return (_port); }
-			INKSERVERCONFIG		getServerConfig( void ) const { return (_serverConfig); }
+			ft::ServerConfig		getServerConfig( void ) const { return (_serverConfig); }
 			char				*getBuffer( void ) const { return ((char *)&buffer[0]);}
 			/** @brief Default private attributes settersnsigned
 			 * Set new values to the attributes

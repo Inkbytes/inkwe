@@ -6,7 +6,7 @@ AR=ar
 FLAGS=
 INCLUDES=includes/
 SRCS = webserv.cpp
-HRCS = includes/webserv.hpp includes/InkSocket.hpp includes/InkConfigParser.hpp includes/InkServerConfig.hpp
+HRCS = includes/webserv.hpp includes/InkSocketIO.hpp includes/InkSocket.hpp includes/InkServerConfig.hpp includes/InkRespond.hpp includes/InkRequest.hpp includes/InkConfigParser.hpp includes/InkCgi.hpp includes/InkAutoIndex.hpp
 OBJS = $(SRCS:.cpp=.o)
 
 
