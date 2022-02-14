@@ -139,7 +139,7 @@ class InkRespond {
 				for (std::vector<std::string>::iterator it = _headers.begin(); it != _headers.end();it++)
 					_ret += *it;
 			if (_err==1)
-				opn = "/Users/mashad/projects/mashad" + conf.getDefaultErrorPagePath()+ "/" +_status+".html";
+				opn = "/Users/f0rkr/Documents/inkwe/" + conf.getDefaultErrorPagePath()+ "/" +_status+".html";
 			else 
 				opn = filePath;
 			if (_cgi ==1 && _err==0)

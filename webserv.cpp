@@ -38,7 +38,6 @@ int main( int args, char **argv ) {
 	try {
 		if (CMLArguments.getVerbose())
 			std::cout << "\033[1;32m[+] Parsing Configuration file\033[0m" << std::endl;
-		ConfigParser.readFileData();
 		ConfigParser.parseFileData();
 	} catch (std::exception &e){
 		std::cout << e.what() << std::endl;

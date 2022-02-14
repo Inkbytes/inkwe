@@ -181,7 +181,7 @@ namespace ft {
 			void			setRootPath( std::string const &rootPath ) { _rootPath = rootPath ; return ; }
 
 			/** @brief Read Root Folder
-			 * Readinf root folder and store its data into 
+			 * Reading root folder and store its data into
 			 * map
 			 *
 			 * @param none
@@ -193,7 +193,7 @@ namespace ft {
 				std::string		ulrtemp = _urlPath;
 				std::string 	urlPath = _urlPath;
 				// TO-DO: Open file and read it's content, then store all folders and files
-				// into the files data structer.
+				// into the file's data structure.
 
 				// _rootPath.erase(std::remove_if(_rootPath.begin(), _rootPath.end(), isspace), _rootPath.end());
 				if ((rootDir = opendir(_rootPath.c_str())) != nullptr) {
@@ -206,9 +206,6 @@ namespace ft {
 							perror("lstat");
 							exit(EXIT_FAILURE);
 						}
-					
-//						std::cout << "$$$$$" << _urlPath << "/" << dname << std::endl;
-//						std::cout << "#####" << _rootPath << "/" << dname << std::endl;
 						_baseHref += "<tr><td><a href='" + _urlPath + "/" + dname + "'>" + dname + "</a></td>" +
 								"<td>" + _getOwnerShip(_sb) + "</td>" +
 								"<td>" + _getFileSize(_sb) + "</td>"  +

@@ -89,7 +89,7 @@ namespace ft {
 					throw ConfigParsing::FileParsingError();
 				else
 					_servers.at(serversCount++).setLocations(locationsCount);
-				if (line[0] == ']')
+				if (line[0] == '[')
 					locationsCount = 0;
 			}
 		}

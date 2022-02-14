@@ -62,33 +62,13 @@ namespace ft {
 		}
 
 		// getters for class attributes
-		std::string getMethod(void) const {
-			return (_method);
-		}
-
-		std::string getPath(void) const {
-			return (_path);
-		}
-
-		std::string getServerProtocol(void) const {
-			return (_serverProtocol);
-		}
-
-		std::string getQuery(void) const {
-			return (_query);
-		}
-
-		std::string getClientIp(void) const {
-			return (_clientIp);
-		}
-
-		std::string getScriptName(void) const {
-			return (_scriptName);
-		}
-
-		std::map<std::string, std::string> getDetails(void) const {
-			return (_details);
-		}
+		std::string getMethod(void) const {return (_method);}
+        std::string getPath(void) const {return (_path);}
+        std::string getServerProtocol(void) const {return (_serverProtocol);}
+        std::string getQuery(void) const {return (_query);}
+        std::string getClientIp(void) const {return (_clientIp);}
+        std::string getScriptName(void) const {return (_scriptName);}
+        std::map<std::string, std::string> getDetails(void) const {return (_details);}
 
 		//private methods
 	private:

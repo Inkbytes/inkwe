@@ -62,7 +62,7 @@
 
 //----- // Define Marcos for general use
 
-# define DEFAULT_CONFIG_PATH 	"config/default.conf.conf"
+# define DEFAULT_CONFIG_PATH 	"conf.d/default.conf"
 # define DEFAULT_PORT			80
 # define DEFAULT_ROOT_DIRECTIVE "www"
 # define DEFAULT_404_PAGE       "pages/404.html"
@@ -90,7 +90,7 @@ class INKARGUMENT {
 		bool 			_help;  // print options usage
 
 	public:
-		INKARGUMENT ( void ): _configurationFileName("conf.d/default.conf"), _fileCheck(false), _verbose(false), _help(false) {
+		INKARGUMENT ( void ): _configurationFileName(DEFAULT_CONFIG_PATH), _fileCheck(false), _verbose(false), _help(false) {
 			return ;
 		}
 		INKARGUMENT( INKARGUMENT const &COPY): _configurationFileName(COPY._configurationFileName), _fileCheck(COPY._fileCheck), _verbose(COPY._verbose), _help(COPY._help) {

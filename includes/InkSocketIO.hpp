@@ -164,7 +164,7 @@ namespace ft {
 				std::stringstream buffer;
 				std::string mytext;
 				
-				file.open("Users/mashad/projects/mashad/conf.d/types.txt");
+				file.open("~/Documents/inkwe/conf.d/types.txt");
 				buffer << file.rdbuf();
 				while (getline(buffer, mytext))
 					split(mytext, " ");
