@@ -274,7 +274,7 @@ namespace ft {
 									else
 										_reqVec[_fds[i].fd].push_back(myText);
 								}
-								request req;
+								ft::request req("localhost");
 								req.parseRequest(_reqVec[_fds[i].fd], _reqM[_fds[i].fd].c_str(), socket->getServerConfig());
 								if (true) {
 									_fds[i].events = POLLOUT;
@@ -285,7 +285,7 @@ namespace ft {
 					if (_fds[i].revents == POLLOUT) {
 						// Getting respond
 						ft::Socket *socket = _findCd(_fds[i].fd);
-						request req;
+						request req("localhost");
 						std::pair<string, int>		pa;
 						std::pair<string, int> a = req.parseRequest(_reqVec[_fds[i].fd], _reqM[_fds[i].fd].c_str(), socket->getServerConfig());
 //							for (int i = 0; i < _reqVec[_fds[i].fd].size() ; i++)
