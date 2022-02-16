@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/11 12:51:54 by f0rkr             #+#    #+#             */
-/*   Updated: 2022/02/14 13:54:49 by                  ###   ########.fr       */
+/*   Updated: 2022/02/16 09:48:14 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,14 @@
 # define SOCKET_HPP
 
 # include "webserv.hpp"
+# include "InkRequest.hpp"
 # include "InkServerConfig.hpp"
 # include <vector>
+
+
 /** @brief ft namespace
  * This namespace includes all class and object
- * that would be needed to compelete this project
+ * that would be needed to complete this project
  */
 namespace ft {
 	/** @brief Socket class
@@ -30,19 +33,20 @@ namespace ft {
 	 */
 	class Socket {
 		public:
-			typedef size_t						size_type;
-			typedef std::string					string;
-			typedef  std::vector<int>			vector;
-			typedef struct sockaddr_in			sockaddrs;
+			typedef size_t								size_type;
+			typedef std::string							string;
+			typedef  std::vector<int>					vector;
+			typedef struct sockaddr_in					sockaddrs;
 		
 		private:
-			int					_socketsd; 	// Socket descriptor
-			vector				_clientsd; // Vector of client socket descriptors
-			char const			*_ipaddr; 	// Ip address
-			uint const			_port;		// Port
-			sockaddrs			_address; 	// Internet Address
-			ft::ServerConfig		_serverConfig; // Server configuration
-			char				buffer[1024];
+			int						_socketsd; 	// Socket descriptor
+			vector					_clientsd; // Vector of client socket descriptors
+			char const				*_ipaddr; 	// Ip address
+			uint const				_port;		// Port
+			sockaddrs				_address; 	// Internet Address
+			ft::ServerConfig			_serverConfig; // Server configuration
+			char					buffer[1024];
+
 			/** @brief Default constructor
 			 * Is made private because there's no use for it
 			 * in the main class, but it's a good practice
@@ -115,7 +119,7 @@ namespace ft {
 			uint				getPort( void ) const { return (_port); }
 			ft::ServerConfig		getServerConfig( void ) const { return (_serverConfig); }
 			char				*getBuffer( void ) const { return ((char *)&buffer[0]);}
-			/** @brief Default private attributes settersnsigned
+			/** @brief Default private attributes setters
 			 * Set new values to the attributes
 			 *
 			 * @param int
@@ -199,7 +203,7 @@ namespace ft {
 
 
 			/** @brief Accept clients
-			 * Accept incomming connection and store 
+			 * Accept incoming connection and store
 			 * new client descriptor
 			 *
 			 * @param client socket
@@ -230,7 +234,7 @@ namespace ft {
 					close(_socketsd);
 					exit(-1);
 				}
-				// Set Socket to be non-blocking. All of the sockets for
+				// Set Socket to be non-blocking. All sockets for
 				// the incoming connections will also be non-blocking since
 				// they will inherit that state from the listening socket.
 				if (ioctl(_socketsd, FIONBIO, (char *)&on) < 0) 

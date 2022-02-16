@@ -6,7 +6,7 @@
 /*   By: f0rkr <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/10 18:58:38 by f0rkr             #+#    #+#             */
-/*   Updated: 2022/02/14 13:48:39 by                  ###   ########.fr       */
+/*   Updated: 2022/02/15 07:53:16 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,8 @@ namespace ft {
 		size_type	_port;				// Port number to bind
 		size_type	_bodySizeLimit;		// Request body size limit
 		size_type	_locationsCount;	// Location size
-		vector		_locations;		// Vector of location classes
+		vector		_locations;			// Vector of location classes
+		string 		_dirPath;			// Directory path
 
 		// Allocator for vector
 		allocator_type	_alloc;
@@ -55,7 +56,16 @@ namespace ft {
 		 * @param none
 		 * @return none
 		 */
-		ServerConfig( void ): _servername(""), _host(""), _defaultErrorPages("pages/"), _port(0), _bodySizeLimit(0), _locationsCount(0), _locations(0), _alloc(allocator_type()) { return ; }
+		ServerConfig( void ): _servername(""), _host(""), _defaultErrorPages("pages/"), _port(0), _bodySizeLimit(0), _locationsCount(0), _locations(0), _alloc(allocator_type()) {
+			char tmp[1024];
+
+			getcwd(tmp, 1024);
+			if (tmp == nullptr) {
+				throw ServerConfig::GetFolderPathError();
+			}
+			_dirPath = string(tmp);
+			return ;
+		}
 
 		/** @brief Default destructor
 		 * destroy all memory allocations and clear all
@@ -79,7 +89,7 @@ namespace ft {
 		size_type	getBodySizeLimit( void ) const { return (_bodySizeLimit); }
 		size_type	getLocationsCount( void ) const { return (_locations.size()); }
 		vector		getLocations() const { return (_locations); }
-
+		string 		getFullPath() const { return (_dirPath); }
 
 		/** @brief Private attributes setters
 		 * Set private attributes values from parameter
@@ -108,6 +118,19 @@ namespace ft {
 				return (false);
 			return (true);
 		}
+
+		class GetFolderPathError : public std::exception {
+		public:
+			GetFolderPathError( void ) throw() {
+				return ;
+			}
+			virtual ~GetFolderPathError( void ) throw() {
+				return ;
+			}
+			virtual const char * what() const throw() {
+				return ("Error: Can't read this directory full path.");
+			}
+		};
 	};
 }
 

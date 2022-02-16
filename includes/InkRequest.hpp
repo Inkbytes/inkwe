@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/02/14 14:03:10 by                  ###   ########.fr       */
+/*   Updated: 2022/02/16 09:44:35 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <vector>
 # include <iterator>
 # include "InkServerConfig.hpp"
+# include "webserv.hpp"
 
 namespace ft {
 	class request {
@@ -31,7 +32,8 @@ namespace ft {
 		std::map<std::string, std::string> _details;
 
 	public:
-		request(std::string clientIp) : _clientIp(clientIp), _isvalid(false) {}
+		request( void ) : _clientIp("localhost"), _isvalid(false) {}
+		request(const std::string &clientIp) : _clientIp(clientIp), _isvalid(false) {}
 
 		~request(void) {}
 
@@ -44,7 +46,7 @@ namespace ft {
 			std::vector<std::string>::iterator it = myVec.begin();
 			if (conf.getLocations()[pos].getMethod() != _method)
 				return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", -1));
-			// parse every details of the request into a map with akey and value
+			// parse every detail of the request into a map with a key and value
 			for (; it != ite; it++) {
 				if ((*it).find(": ") == std::string::npos) {
 					it++;

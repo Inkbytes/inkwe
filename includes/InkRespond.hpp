@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/22 09:56:30 by                   #+#    #+#             */
-/*   Updated: 2022/02/14 13:54:14 by                  ###   ########.fr       */
+/*   Updated: 2022/02/15 07:57:37 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,11 +24,14 @@
 #include <dirent.h>
 
 class InkRespond {
+	public:
+		typedef size_t 		size_type;
+		typedef std::string string;
 	private:
-		std::string	_ret;
-		std::string	_status;
-		size_t		_err;
-		size_t		_cgi;
+		string			_ret;
+		string			_status;
+		size_type		_err;
+		size_type		_cgi;
 
 	public:
 		InkRespond(const ft::ServerConfig& conf, const ft::request& req, const std::pair<std::string, int>& a) :_err(0),_cgi(0){
@@ -139,7 +142,7 @@ class InkRespond {
 				for (std::vector<std::string>::iterator it = _headers.begin(); it != _headers.end();it++)
 					_ret += *it;
 			if (_err==1)
-				opn = "/Users/f0rkr/Documents/inkwe/" + conf.getDefaultErrorPagePath()+ "/" +_status+".html";
+				opn = conf.getFullPath() + "/" + conf.getDefaultErrorPagePath()+ "/" +_status+".html";
 			else 
 				opn = filePath;
 			if (_cgi ==1 && _err==0)

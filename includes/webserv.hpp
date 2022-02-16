@@ -179,3 +179,32 @@ namespace Color {
 	};
 }
 #endif
+
+//
+//// Request
+//std::pair<std::string, int> a;
+//std::string myText;
+//std::vector<std::string> myVec;
+//std::stringstream NewBuffer((std::string(buffer)));
+//std::memset(&buffer, 0, sizeof(buffer));
+//std::string method;
+//const char *Res;
+//int counter = 0;
+//std::pair<std::string, int> pa;
+//
+//// Copy data from buffer to the vector
+//while (getline(NewBuffer, myText))
+//{
+//if (counter == 0)
+//{
+//counter++;
+//method = myText;
+//}
+//else
+//myVec.push_back(myText);
+//}
+//// getting respond
+//request req("localhost");
+//a = req.parseRequest(myVec, method, _findCd(_fds[i].fd)->getServerConfig());
+//InkRespond respond(_findCd(_fds[i].fd)->getServerConfig(), req, a);
+//pa = respond.SetRespond(req, _findCd(_fds[i].fd)->getServerConfig(), _types, a.second);
