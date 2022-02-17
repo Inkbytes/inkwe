@@ -32,6 +32,7 @@ namespace ft {
 		bool _end_server;
 		bool _compress_array;
 		vector _sockets;
+		map								_reqMap;
 		std::map<std::string, std::string> _types;
 		struct pollfd _fds[200];
 //		map		_req;
@@ -116,7 +117,7 @@ namespace ft {
 		 */
 		SocketIO(vector const &sockets) : _timeout(3 * 60 * 1000), _close_conn(), _nfds(sockets.size()),
 										  _current_size(0), _desc_ready(), _end_server(false), _compress_array(false),
-										  _sockets(sockets), _reqVec(mapi()), _reqM(maps()){
+										  _sockets(sockets), _reqVec(mapi()), _reqM(maps()), _reqMap(map()){
 			// Initializing the fds poll array with zeros.
 			std::memset(_fds, 0, sizeof(_fds));
 			// Init types
@@ -266,7 +267,7 @@ namespace ft {
 								std::memset(&buffer, 0, sizeof(buffer));
 
 								while (getline(newBuffer, myText)) {
-									if (counter == 0)
+									if (_reqM[_fds[i].fd].empty() && counter == 0)
 									{
 										counter++;
 										_reqM[_fds[i].fd] = (myText);
@@ -274,30 +275,29 @@ namespace ft {
 									else
 										_reqVec[_fds[i].fd].push_back(myText);
 								}
-								ft::request req("localhost");
-								req.parseRequest(_reqVec[_fds[i].fd], _reqM[_fds[i].fd].c_str(), socket->getServerConfig());
-								if (true) {
+								_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
+								_reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
+
+								if (_reqMap[_fds[i].fd].is_complete()) {
 									_fds[i].events = POLLOUT;
 								}
 								_close_conn = true;
 							} while (!_close_conn);
 					}
 					if (_fds[i].revents == POLLOUT) {
-						// Getting respond
-						ft::Socket *socket = _findCd(_fds[i].fd);
-						request req("localhost");
-						std::pair<string, int>		pa;
-						std::pair<string, int> a = req.parseRequest(_reqVec[_fds[i].fd], _reqM[_fds[i].fd].c_str(), socket->getServerConfig());
-//							for (int i = 0; i < _reqVec[_fds[i].fd].size() ; i++)
-//								std::cout << _reqVec[_fds[i].fd][i];
-//							std::cout << std::endl;
-						InkRespond respond(socket->getServerConfig(), req, a);
-						pa = respond.SetRespond(req, socket->getServerConfig(), _types, a.second);
-						send(_fds[i].fd, pa.first.c_str(), pa.second, 0);
-						_fds[i].events = POLLIN;
+							// Getting respond
+							ft::Socket *socket = _findCd(_fds[i].fd);
+							_reqMap.erase(_fds[i].fd);
+							_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
+							std::pair<string, int> a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
+							InkRespond respond(socket->getServerConfig(), _reqMap[_fds[i].fd], a);
+							std::pair<std::string, int> pa = respond.SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, a.second);
+							rc = send(_fds[i].fd, pa.first.c_str(), pa.second, 0);
+							_fds[i].events = POLLIN;
 //							_fds[i].revents = POLLIN;
-						_reqVec.erase(_fds[i].fd);
-						_reqM.erase(_fds[i].fd);
+							_reqVec.erase(_fds[i].fd);
+							_reqM.erase(_fds[i].fd);
+
 					}else if (_fds[i].revents & (POLLERR | POLLNVAL)) {
 						printf("socket error\n");
 						break;

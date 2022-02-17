@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/02/16 09:44:35 by                  ###   ########.fr       */
+/*   Updated: 2022/02/17 07:46:04 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,22 +24,28 @@ namespace ft {
 	class request
 	{
 		private:
-			std::string _method;
-			std::string _serverProtocol;
-			std::string _path;
-			std::string _query;
-			std::string _clientIp;
-			std::string _scriptName;
-			std::map<std::string, std::string> _details;
-			bool _complete;
+			std::string 						_method;
+			std::string 						_serverProtocol;
+			std::string 						_path;
+			std::string 						_query;
+			std::string 						_clientIp;
+			std::string 						_scriptName;
+			std::map<std::string, std::string> 	_details;
+			bool								_complete;
+			std::vector<std::string>			_request;
+			ft::ServerConfig						_conf;
 
 		public:
-			request(std::string clientIp) : _clientIp(clientIp), _complete(false) { }
+			request( void ) : _clientIp("localhost"), _complete(false), _request(std::vector<std::string>()), _method("") {
+				return ;
+			}
+			request(std::string clientIp, const std::string &method, ft::ServerConfig conf) : _clientIp(clientIp), _complete(false), _method(method) { }
 			~request(void) {}
 			std::pair<std::string, int> parseRequest(std::vector<std::string> myVec, std::string method, ft::ServerConfig conf)
 			{
 				std::string body;
 				method.erase(method.find('\r'));
+
 				splitMethod(method);
 				int pos = splitPath(_path, conf);
 				std::vector<std::string>::iterator ite = myVec.end();
@@ -102,12 +108,24 @@ namespace ft {
 					{
 						for (;it!=ite;it++)
 							_query+= *it;
-						_complete = 0;
 					}
-				}
+				} else
+					_complete = 1;
 				return (std::make_pair("200", pos));
 			}
 
+			// Append request and check if is complete
+			void 	append(std::vector<std::string> const &req, const std::string &method, ft::ServerConfig conf) {
+				for (int i = 0 ; i < req.size() ; i++) {
+					_request.push_back(req[i]);
+				}
+				_method = method;
+			}
+
+			std::pair<std::string, int>	parseReq(ft::ServerConfig conf) {
+				_conf = conf;
+				return (parseRequest(_request, _method, conf));
+			}
 			// is_chunk_length imp
 			int is_chunck_length(std::string str) {
 				str.substr(0, str.length()-1);
@@ -120,7 +138,7 @@ namespace ft {
 				return stoi(str);
 			}
 
-			// geters for class private attributes
+			// getters for class private attributes
 			std::string getMethod( void ) const {
 				return (_method);
 			}
@@ -145,7 +163,7 @@ namespace ft {
 			bool getComplet( void ) const {
 				return (_complete);
 			}
-			// check if request is complet
+			// check if request is complete
 			bool is_complete(){
 				if (_complete)
 					return (1);
