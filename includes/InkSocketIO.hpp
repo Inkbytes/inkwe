@@ -20,6 +20,7 @@ namespace ft {
 		typedef std::vector<Socket> vector;
 		typedef struct pollfd pollsd;
 		typedef size_t size_type;
+		typedef std::map<int, InkRespond>	respond_map;
 		typedef std::map<int, request>	map;
 		typedef std::map<int, std::vector<string> > mapi;
 		typedef std::map<int, string>				maps;
@@ -34,6 +35,8 @@ namespace ft {
 		vector _sockets;
 		map								_reqMap;
 		std::map<std::string, std::string> _types;
+		respond_map 					_resMap;
+
 		struct pollfd _fds[200];
 //		map		_req;
 		mapi	_reqVec;
@@ -117,7 +120,7 @@ namespace ft {
 		 */
 		SocketIO(vector const &sockets) : _timeout(3 * 60 * 1000), _close_conn(), _nfds(sockets.size()),
 										  _current_size(0), _desc_ready(), _end_server(false), _compress_array(false),
-										  _sockets(sockets), _reqVec(mapi()), _reqM(maps()), _reqMap(map()){
+										  _sockets(sockets), _reqVec(mapi()), _reqM(maps()), _reqMap(map()), _resMap(respond_map()){
 			// Initializing the fds poll array with zeros.
 			std::memset(_fds, 0, sizeof(_fds));
 			// Init types
@@ -286,17 +289,23 @@ namespace ft {
 					}
 					if (_fds[i].revents == POLLOUT) {
 							// Getting respond
+
 							ft::Socket *socket = _findCd(_fds[i].fd);
 							_reqMap.erase(_fds[i].fd);
 							_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
 							std::pair<string, int> a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
-							InkRespond respond(socket->getServerConfig(), _reqMap[_fds[i].fd], a);
-							std::pair<std::string, int> pa = respond.SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, a.second);
+							_resMap[_fds[i].fd].confRespond(socket->getServerConfig(), _reqMap[_fds[i].fd], a);
+							std::pair<std::string, int> pa = _resMap[_fds[i].fd].SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, a.second);
+
+
 							rc = send(_fds[i].fd, pa.first.c_str(), pa.second, 0);
-							_fds[i].events = POLLIN;
-//							_fds[i].revents = POLLIN;
-							_reqVec.erase(_fds[i].fd);
-							_reqM.erase(_fds[i].fd);
+							if (_resMap[_fds[i].fd].is_done(rc)) {
+								_fds[i].events = POLLIN;
+//								_fds[i].revents = POLLIN;
+								_reqVec.erase(_fds[i].fd);
+								_reqM.erase(_fds[i].fd);
+							}
+
 
 					}else if (_fds[i].revents & (POLLERR | POLLNVAL)) {
 						printf("socket error\n");

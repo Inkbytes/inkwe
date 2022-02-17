@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/02/17 07:46:04 by                  ###   ########.fr       */
+/*   Updated: 2022/02/17 10:35:00 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,9 @@ namespace ft {
 			request( void ) : _clientIp("localhost"), _complete(false), _request(std::vector<std::string>()), _method("") {
 				return ;
 			}
-			request(std::string clientIp, const std::string &method, ft::ServerConfig conf) : _clientIp(clientIp), _complete(false), _method(method) { }
+			request(std::string clientIp, const std::string &method, ft::ServerConfig conf) : _clientIp(clientIp), _complete(false), _method(method), _conf(conf){
+				return ;
+			}
 			~request(void) {}
 			std::pair<std::string, int> parseRequest(std::vector<std::string> myVec, std::string method, ft::ServerConfig conf)
 			{
@@ -52,7 +54,7 @@ namespace ft {
 				std::vector<std::string>::iterator it = myVec.begin();
 				if (conf.getLocations()[pos].getMethod() != _method)
 					return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", -1));
-				// parse every details of the request into a map with akey and value
+				// parse every detail of the request into a map with a  key and value
 				for (; it != ite; it++)
 				{
 					if ((*it).find(": ") == std::string::npos)
@@ -120,6 +122,7 @@ namespace ft {
 					_request.push_back(req[i]);
 				}
 				_method = method;
+				_conf = conf;
 			}
 
 			std::pair<std::string, int>	parseReq(ft::ServerConfig conf) {
