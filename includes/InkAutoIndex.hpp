@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <stdint.h>
 #include <time.h>
+#include <istream>
 
 /** @brief Ft namespace
  * Forthy two namespace where all OOP classes
@@ -204,7 +205,18 @@ namespace ft {
 						urlPath = ulrtemp;
 						if (lstat((_rootPath + "/" + dname).c_str(), &_sb) == -1) {
 							perror("lstat");
-							exit(EXIT_FAILURE);
+							std::ifstream f;
+							std::string errorRaw;
+							std::stringstream buffer;
+
+							f.open("var/www/pages/500.html");
+							if (!f.good())
+								std::cout << "Can't open file." << std::endl;
+							buffer << f.rdbuf();
+							errorRaw = buffer.str();
+							f.close();
+							buffer.clear();
+							return (errorRaw);
 						}
 						_baseHref += "<tr><td><a href='" + _urlPath + "/" + dname + "'>" + dname + "</a></td>" +
 								"<td>" + _getOwnerShip(_sb) + "</td>" +

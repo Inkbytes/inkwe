@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/22 09:56:30 by                   #+#    #+#             */
-/*   Updated: 2022/02/17 13:37:43 by                  ###   ########.fr       */
+/*   Updated: 2022/02/21 10:36:54 by                  ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,146 +29,86 @@ namespace ft {
 			typedef size_t size_type;
 			typedef std::string string;
 		private:
-			string _ret;
-			string _status;
-			size_type _err;
-			size_type _cgi;
-			size_type _file_size;
-			size_type _current_size;
-			std::ifstream _stream;
-
-
+			string 			_ret;
+			string 			_status;
+			size_type		_err;
+			size_type		_cgi;
+			size_type		_file_size;
+			size_type		_current_size;
+			std::ifstream 	_stream;
+			size_type		_header_size;
+			bool 			_flag;
+			InkRespond& 	operator=(const InkRespond& op);
 		public:
-			InkRespond(void) : _err(0), _cgi(0), _file_size(0), _current_size(0) {
+			InkRespond(void) : _err(0), _cgi(0), _file_size(0), _current_size(0), _flag(false){
 				return;
 			}
-
-			InkRespond(const ft::ServerConfig &conf, const ft::request &req, const std::pair<std::string, int> &a) : _err(
-					0), _cgi(0), _file_size(0), _current_size(0) {
-				// check if it's a valid request method
-				std::string file;
-				if (a.first == "200") {
-					if (req.getScriptName().length() == 0)
-						file = conf.getLocations()[a.second].getRoot() + "/";
-					else
-						file = conf.getLocations()[a.second].getRoot() + "/" + req.getScriptName();
-					if (req.getMethod() != "GET" && req.getMethod() != "POST" && req.getMethod() != "DELETE") {
-						_status = "501";
-						_ret = "HTTP/1.1 501 Not Implemented\n";
-						_err = 1;
-					}
-
-						// check if it's a valid protocol version
-					else if (!req.getServerProtocol().compare("HTTP/1.1")) {
-						_status = "405";
-						_ret = "HTTP/1.1 405 Method Not Allowed\n";
-						_err = 1;
-					}
-
-						// check if path exists
-					else if (req.getPath() == "/" && req.getScriptName().length() == 0) {
-						_status = "index.html";
-						_ret = "HTTP/1.1 200 OK\n";
-					} else if (int d = open(file.c_str(), O_RDONLY) == -1) {
-						_status = "404";
-						_ret = "HTTP/1.1 404 Not Found\n";
-						_err = 1;
-					}
-
-						// check if we will use cgi
-					else if ((req.getScriptName().find(".php") != std::string::npos ||
-							  req.getScriptName().find(".py") != std::string::npos)
-							 && (req.getMethod() == "GET" || req.getMethod() == "POST")) {
-						std::pair<std::string, std::string> p;
-						ft::InkCgi cgi(req, conf.getLocations()[a.second]);
-						p = cgi.execCgi(req);
-						_status = p.first;
-						_ret = p.second;
-						if (_status[0] == '4' || _status[0] == '5')
-							_err = 1;
-						_cgi = 1;
-					}
-
-						// DELETE request
-					else if (req.getMethod() == "DELETE") {
-						if (remove(req.getScriptName().c_str()) == 0) {
-							_status = "403";
-							_ret = "HTTP/1.1 403 Not Allowed\n";
-						}
-						_status = "204";
-						_ret = "HTTP/1.1 204 No Content\n\n";
-					} else {
-						_ret = "HTTP/1.1 200 OK\n";
-						_status = req.getScriptName();
-					}
-				} else {
-					_ret = a.first;
-					_status = "400";
-					_err = 1;
-				}
+			InkRespond(const InkRespond &copy): _err(0), _cgi(0), _file_size(0), _current_size(0), _flag(false) {
+				return ;
+			}
+			explicit InkRespond(const ft::ServerConfig &conf, const ft::request &req, const std::pair<std::string, int> &a) : _err(
+					0), _cgi(0), _file_size(0), _current_size(0), _header_size(0), _flag(false) {
+				return ;
 			}
 
 			// Set respond
 			void confRespond(const ft::ServerConfig &conf, const ft::request &req, const std::pair<std::string, int> &a) {
-				// check if it's a valid request method
+				// check if its a valid request nethod
 				std::string file;
-				if (a.first == "200") {
+				if (a.first == "200")
+				{
 					if (req.getScriptName().length() == 0)
 						file = conf.getLocations()[a.second].getRoot() + "/";
-					else
-						file = conf.getLocations()[a.second].getRoot() + "/" + req.getScriptName();
-					if (req.getMethod() != "GET" && req.getMethod() != "POST" && req.getMethod() != "DELETE") {
-						_status = "501";
-						_ret = "HTTP/1.1 501 Not Implemented\n";
-						_err = 1;
-					}
-
-						// check if it's a valid protocol version
-					else if (!req.getServerProtocol().compare("HTTP/1.1")) {
-						_status = "405";
-						_ret = "HTTP/1.1 405 Method Not Allowed\n";
-						_err = 1;
-					}
-
-						// check if path exists
-					else if (req.getPath() == "/" && req.getScriptName().length() == 0) {
+					else	
+						file = conf.getLocations()[a.second].getRoot() + "/"+ req.getScriptName();
+					
+					// check if path exists
+					if (req.getPath()=="/" && req.getScriptName().length() == 0)
+					{
 						_status = "index.html";
 						_ret = "HTTP/1.1 200 OK\n";
-					} else if (int d = open(file.c_str(), O_RDONLY) == -1) {
+					}
+					else if (int d=open(file.c_str(),O_RDONLY)==-1)
+					{
 						_status = "404";
-						_ret = "HTTP/1.1 404 Not Found\n";
+						_ret ="HTTP/1.1 404 Not Found\n";
 						_err = 1;
 					}
-
-						// check if we will use cgi
-					else if ((req.getScriptName().find(".php") != std::string::npos ||
-							  req.getScriptName().find(".py") != std::string::npos)
-							 && (req.getMethod() == "GET" || req.getMethod() == "POST")) {
-						std::pair<std::string, std::string> p;
-						ft::InkCgi cgi(req, conf.getLocations()[a.second]);
+					
+					// check if we will use cgi
+					else if ((req.getScriptName().find(".php") != std::string::npos || req.getScriptName().find(".py") != std::string::npos) 
+						&& (req.getMethod()=="GET" || req.getMethod()=="POST") && (conf.getLocations()[a.second]).getAutoIndex() == 0)
+					{
+						std::pair<std::string,std::string> p;
+						InkCgi cgi(req, conf.getLocations()[a.second]);
 						p = cgi.execCgi(req);
 						_status = p.first;
 						_ret = p.second;
-						if (_status[0] == '4' || _status[0] == '5')
+						if (_status[0] == '4' || _status[0]=='5')
 							_err = 1;
 						_cgi = 1;
 					}
-
-						// DELETE request
-					else if (req.getMethod() == "DELETE") {
-						if (remove(req.getScriptName().c_str()) == 0) {
+					
+					// DELETE request
+					else if (req.getMethod()=="DELETE")
+					{
+						if (remove(req.getScriptName().c_str()) == 0)
+						{
 							_status = "403";
 							_ret = "HTTP/1.1 403 Not Allowed\n";
 						}
 						_status = "204";
 						_ret = "HTTP/1.1 204 No Content\n\n";
-					} else {
+					}
+					else {
 						_ret = "HTTP/1.1 200 OK\n";
 						_status = req.getScriptName();
 					}
-				} else {
+				}
+				else 
+				{
 					_ret = a.first;
-					_status = "400";
+					_status = To_string(a.second);
 					_err = 1;
 				}
 			}
@@ -184,71 +124,106 @@ namespace ft {
 				std::streampos size;
 				std::string filePath;
 				std::pair<std::string, bool> Autoindex;
-
-				if (locationPos != -1) {
-					Autoindex = check_autoIndex(req.getPath() + "/" + req.getScriptName(),
-												conf.getLocations()[locationPos].getRoot() + "/" + req.getScriptName(),
-												conf.getLocations()[locationPos]);;
+				
+				if(!_err)
+				{
+					Autoindex = check_autoIndex(req.getPath() + "/" + req.getScriptName() ,conf.getLocations()[locationPos].getRoot()+"/" +req.getScriptName(), conf.getLocations()[locationPos]);;
 					if (req.getPath() == "/" && _status == "index.html")
-						filePath = conf.getLocations()[locationPos].getRoot() + "/" + _status;
+						filePath = conf.getLocations()[locationPos].getRoot() +"/"+_status;
 					else
-						filePath = conf.getLocations()[locationPos].getRoot() + "/" + req.getScriptName();
+						filePath = conf.getLocations()[locationPos].getRoot()+ "/" +req.getScriptName();
 				}
 				scriptname = req.getScriptName();
-				ext = scriptname.substr(scriptname.find('.') + 1, scriptname.length());
-				if (Autoindex.second == 1 && Autoindex.first.length() == 0)
+				if (scriptname.find('.') != std::string::npos)
+					ext = scriptname.substr(scriptname.find('.') + 1, scriptname.length());
+				else
+					ext = "";
+				if (Autoindex.second == 1 && Autoindex.first.length() == 0)	
 					_headers.push_back("Content-Disposition: attachment\r\n");
-				if (req.getMethod() == "DELETE" && _status == "204")
+				if (req.getMethod()=="DELETE" && _status == "204")
 					return (std::make_pair(_ret, _ret.length()));
-				else if (types.find(ext) != types.end() && _err == 0)
-					_headers.push_back("Content-Type: " + types.find(ext)->second + "\r\nContent-Length: ");
+				else if (types.find(ext)!=types.end() && _err==0)
+					_headers.push_back("Content-Type: "+types.find(ext)->second+"\r\nContent-Length: ");
 				else
 					_headers.push_back("Content-Type: text/html; charset=UTF-8\r\nContent-Length: ");
-				if (req.getScriptName().find(".php") == std::string::npos ||
-					(req.getScriptName().find(".php") != std::string::npos && _err == 1))
-					for (std::vector<std::string>::iterator it = _headers.begin(); it != _headers.end(); it++)
+				if ((req.getScriptName().find(".php") != std::string::npos && (_err == 1 || Autoindex.second == 1)) || req.getScriptName().find(".php") == std::string::npos) {
+					for (std::vector<std::string>::iterator it = _headers.begin(); it != _headers.end();it++)
 						_ret += *it;
-				if (_err == 1)
-					opn = conf.getFullPath() + "/" + conf.getDefaultErrorPagePath() + "/" + _status + ".html";
-				else
+					_header_size = _ret.length();
+				}
+				if (_err==1 && conf.getDefaultErrorPagePath() != "")
+					opn = conf.getFullPath() + conf.getDefaultErrorPagePath()+ "/" +_status+".html";
+				else if (_err == 1)
+				{
+					_ret = _ret + "3\r\n\r\n"+ _status;
+					return (std::make_pair(_ret, _ret.length()));
+				}
+				else 
 					opn = filePath;
-				if (_cgi == 1 && _err == 0) {
+				/// here
+
+				if (_cgi ==1 && _err==0 && Autoindex.second == 0)
+				{
 					if (req.getScriptName().find(".php") != std::string::npos)
-						_ret = _ret + _status;
+						_ret = _ret +_status;
 					else
-						_ret += To_string(_status.length()) + "\r\n\r\n" + _status;
+						_ret += To_string(_status.length()) + "\r\n\r\n" +_status;
 					size = _ret.length();
+					_flag = true;
 				} else {
-					if (Autoindex.first.length() != 0) {
-						_ret += To_string(Autoindex.first.length()) + "\r\n\r\n" + Autoindex.first;
+					if (Autoindex.first.length() != 0)
+					{
+						_ret += To_string(Autoindex.first.length())+"\r\n\r\n" + Autoindex.first;
 						size = _ret.length();
+						_flag = true;
 					} else {
-						std::ifstream 	f(opn, std::ios::in | std::ios::binary | std::ios::ate);
-						char 			*file = new char[1024*10];
-						int 			tmp;
+						// MOD
+						int i;
+						int tmp;
+						_stream.open(opn, std::ios::in | std::ios::binary | std::ios::ate);
 
-						_stream = f;
+						if (_stream.is_open())
+							std::cout << "TRUE OPEN." << std::endl;
+						std::cout << opn << std::endl;
 						_file_size = _stream.tellg();
-
+						_current_size = 0;
+						size = 0;
 						_stream.seekg(0, std::ios::beg);
-						_stream.read(file, 1024*10);
-						tmp = _stream.gcount();
-						_current_size = _stream.gcount();
-						_ret += To_string(tmp) + "\r\n\r\n";
-						size = tmp;
+						_ret += To_string(_file_size) + "\r\n\r\n";
 						size += _ret.length();
-						for (int i = 0; i < tmp; ++i)
-							_ret.push_back(file[i]);
-						_stream.close();
+						// END MOD
 					}
 				}
 				return (std::make_pair(_ret, size));
 			}
 			std::pair<std::string, std::streampos>	readStream() {
-				_stream.read(file, 1024*10);
+				char 			file[2048*100];
+				int 			tmp;
+				int				size;
+				int 			i;
+				std::string	ret = "";
 
-				tmp = _stream.gcount();
-				return ();
+				std::cout << "READING FILE"<< std::endl;
+				std::memset(&file, 0, 2048*100);
+				for (i = 0; i < 2048*100 && !_stream.eof() ; i++)
+					_stream.get(file[i]);
+				tmp = i;
+				size = tmp;
+				
+				for (i = 0; i < tmp; i++)
+					ret.push_back(file[i]);
+				std::memset(file, 0, 2048*10);
+				std::cout << "READING IS DONE" << std::endl;
+				return (std::make_pair(ret, size));
+			}
+
+			void 		streamClose( void ) {
+				_stream.close();
+				_ret.clear();
+				return ;
+			}
+			size_type	getHeaderSize( void ) const {
+				return (_header_size);
 			}
 			std::pair<std::string, bool>
 			check_autoIndex(const std::string &urlPath, const std::string &path, const ft::Location &location) {
@@ -265,10 +240,14 @@ namespace ft {
 			}
 
 			bool is_done(size_type position) {
-				if (_stream.eof()) {
+				if (_stream.eof() || _flag == true) {
+					std::cout << _flag << std::endl;
+					std::cout << " HERE " << std::endl;
+					_flag = false;
 					return (true);
 				}
-				_stream.seekg(position, std::ios::beg);
+				_current_size += position;
+				_stream.seekg(_current_size, std::ios::beg);
 				return (false);
 			}
 

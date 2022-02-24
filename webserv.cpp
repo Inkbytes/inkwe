@@ -1,5 +1,9 @@
 # include "includes/webserv.hpp"
 
+void handler(int s) {
+	printf("Caught SIGPIPE\n");
+}
+
 int main( int args, char **argv ) {
 	INKARGUMENT		CMLArguments;
 	ft::ConfigParsing ConfigParser;
@@ -55,11 +59,12 @@ int main( int args, char **argv ) {
 			}
 		}
 		ft::SocketIO sockio(sockets);
-
+		signal(SIGPIPE, SIG_IGN);
 		sockio.startServer();
 	}
 	catch (std::exception &e) {
 		std::cout << e.what() << std::endl;
 	}
+	std::cout << " HELLO " << std::endl;
 	return (0);
 }

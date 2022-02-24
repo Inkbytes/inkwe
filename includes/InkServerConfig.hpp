@@ -56,7 +56,7 @@ namespace ft {
 		 * @param none
 		 * @return none
 		 */
-		ServerConfig( void ): _servername(""), _host(""), _defaultErrorPages("pages/"), _port(0), _bodySizeLimit(0), _locationsCount(0), _locations(0), _alloc(allocator_type()) {
+		ServerConfig( void ): _servername(""), _host(""), _defaultErrorPages("var/www/pages/"), _port(0), _bodySizeLimit(0), _locationsCount(0), _locations(0), _alloc(allocator_type()) {
 			char tmp[1024];
 
 			getcwd(tmp, 1024);

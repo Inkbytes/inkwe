@@ -46,40 +46,52 @@ namespace ft {
 			std::pair<std::string, int> parseRequest(std::vector<std::string> myVec, std::string method, ft::ServerConfig conf)
 			{
 				std::string body;
-				method.erase(method.find('\r'));
+				int flag = 0;
 
+				method.erase(method.find('\r'));
 				splitMethod(method);
 				int pos = splitPath(_path, conf);
 				std::vector<std::string>::iterator ite = myVec.end();
 				std::vector<std::string>::iterator it = myVec.begin();
-				if (conf.getLocations()[pos].getMethod() != _method)
-					return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", -1));
-				// parse every detail of the request into a map with a  key and value
+				if (_method != "GET" && _method != "POST" && _method != "DELETE")
+					return(std::make_pair("HTTP/1.1 501 Not Implemented", 501));
+				else
+				{
+					for (int i = 0; i <conf.getLocationsCount(); i++)
+					{
+						if (_path == conf.getLocations()[i].getLocation())
+							if (_method == conf.getLocations()[i].getMethod())
+								flag =1;
+					}
+					if (flag != 1)
+						return (std::make_pair("HTTP/1.1 405 METHOD NOT ALLOWED\n", 405));
+				}
+				if (_serverProtocol != "HTTP/1.1")
+					return (std::make_pair("HTTP/1.1 505 SERVER HTTP VERSION NOT SUPPORTED\n", 505));
+				
+				// parse every details of the request into a map with akey and value
 				for (; it != ite; it++)
 				{
-					if ((*it).find(": ") == std::string::npos)
+					(*it).erase((*it).find('\r'));
+					if (*it == "")
 					{
 						it++;
 						break ;
 					}
 					else
-					{
-						(*it).erase((*it).find('\r'));
 						if (split(*it, ": ") == -1)
-							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", -1));
-
-					}
+							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", 400));
 				}
+				
 				// set POST body
-				if (_query.length()==0 && it != ite && _method == "POST")
-				{
-					// chunked request
+				if (_query.length()==0 && it != ite && _method == "POST") {
+					// chunked request 
 					if (_details.find("Transfer-Encoding")->second == "chunked")
 					{
 						std::vector<int> chunck_size;
 						(*it).erase((*it).find('\r'));
 						if (is_chunck_length(*it) == -1)
-							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", -1));
+							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", 400));
 						else
 						{
 							chunck_size.push_back(is_chunck_length(*it));
@@ -96,7 +108,7 @@ namespace ft {
 									break ;
 								}
 								if (_query.length() > total_size(chunck_size))
-									return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", -1));
+									return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n",400));
 								else if (_query.length() < total_size(chunck_size))
 									_query += *it;
 								else
@@ -106,12 +118,17 @@ namespace ft {
 								_query += *it;
 						}
 					}
+					// simple post
 					else
 					{
 						for (;it!=ite;it++)
 							_query+= *it;
+						_complete = 1;
 					}
-				} else
+					if (_query.length() > conf.getBodySizeLimit())
+						return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n",400));
+				}
+				else
 					_complete = 1;
 				return (std::make_pair("200", pos));
 			}
@@ -200,6 +217,8 @@ namespace ft {
 			int split(std::string text, std::string dilemitter)
 			{
 				size_t pos = text.find(dilemitter);
+				if (pos == std::string::npos)
+					return (-1);
 				std::string token = text.substr(0, pos);
 				std::string token1 = text.substr(pos + 2, text.length());
 				if (token.empty() || token1.empty())
@@ -215,7 +234,7 @@ namespace ft {
 				pos = method.find(" ");
 				_path = method.substr(0, pos);
 				method.erase(0, pos);
-				_serverProtocol = method.substr(0, method.length());
+				_serverProtocol = method.substr(1, method.length());
 			}
 			int splitPath(std::string path, ft::ServerConfig conf)
 			{
@@ -230,13 +249,13 @@ namespace ft {
 					path.erase(pos, path.length());
 					p=path;
 				}
-
+				
 				while (path.find("/") != std::string::npos)
 				{
 					_path = path;
 					for (int i = 0; i <conf.getLocationsCount(); i++)
 					{
-						if (conf.getLocations()[i].getLocation() == "/")
+						if (conf.getLocations()[i].getLocation() == "/" && conf.getLocations()[i].getMethod() == _method)
 							ret = i;
 						if (conf.getLocations()[i].getLocation() == _path && conf.getLocations()[i].getMethod() == _method)
 						{
@@ -249,7 +268,7 @@ namespace ft {
 						}
 					}
 					if (path.find_first_of("/") == path.find_last_of("/"))
-						path = "/";
+						break;
 					else
 						path = path.substr(0,path.find_last_of("/"));
 				}
@@ -259,3 +278,32 @@ namespace ft {
 			}
 	};
 }
+
+
+
+
+#pragma once
+
+# include <iostream>
+# include <map>
+# include <vector>
+# include <iterator>
+# include <exception>
+
+class request
+{
+	private:
+		std::string _method;
+		std::string _serverProtocol;
+		std::string _path;
+		std::string _query;
+		std::string _clientIp;
+		std::string _scriptName;
+		std::map<std::string, std::string> _details;
+		bool _complete;
+
+	public:
+		request(std::string clientIp) : _clientIp(clientIp), _complete(false) { }
+		~request(void) {}
+
+};

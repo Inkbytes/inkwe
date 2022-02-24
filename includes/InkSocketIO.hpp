@@ -27,7 +27,6 @@ namespace ft {
 	private:
 		int _timeout;
 		int _close_conn;
-		int _nfds;
 		int _current_size;
 		int _desc_ready;
 		bool _end_server;
@@ -36,8 +35,10 @@ namespace ft {
 		map								_reqMap;
 		std::map<std::string, std::string> _types;
 		respond_map 					_resMap;
+		int 							_flag;
 
-		struct pollfd _fds[200];
+		// struct pollfd _fds[200];
+		std::vector<pollfd> _fds;
 //		map		_req;
 		mapi	_reqVec;
 		maps	_reqM;
@@ -76,7 +77,7 @@ namespace ft {
 		 * @return Socket
 		 */
 		Socket *_findSd(int sd) {
-			for (int i = 0; i < _nfds; i++) {
+			for (int i = 0; i < _fds.size(); i++) {
 				if (sd == _sockets[i].getSocketSd())
 					return (&(_sockets[i]));
 			}
@@ -100,6 +101,183 @@ namespace ft {
 			return (nullptr);
 		}
 
+		/** @brief Accept clients
+		 * Accept all clients that been queued
+		 * in accept
+		 * 
+		 * @param
+		 * @return
+		 */
+		void		_accept_clients(int i) {
+			struct pollfd 	fds;
+			int				new_sd;
+
+			// Listening descriptor is readable.
+			std::cout << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Has a incomming connection."
+			<< std::endl;
+			
+			// Accept all incoming connections that are
+			// queued up on the listening socket before we
+			// loop back and call poll again
+			do {
+
+				// Accept each incoming connection. if
+				// accept fails with EWOULDBLOCK, then we
+				// have accepted all of them. Any other
+				// failure on accept will cause us to end
+				// the server.
+				new_sd = _findSd(_fds[i].fd)->accepts();
+				if (new_sd < 0) {
+					break;
+				}
+				// Add the new incoming connection to
+				// the pollfd structure
+				std::cout << "[" << _getTimestamp() << "]: New incoming connection " << new_sd
+				<< std::endl;
+				fds.fd = new_sd;
+				fds.events = POLLIN;
+				_fds.push_back(fds);
+				// Loop back up and accept another incoming
+				// connection.
+			} while (new_sd >= 0);
+		}
+	
+
+
+		/** @brief Recv data
+		 * Recv the request on certain socket descriptors
+		 * with non-blocking method.
+		 * 
+		 * @param 
+		 * @return
+		 */
+		bool		_recv_data(int i) {
+			const char	*res;
+			string 		myText;
+			string 		method;
+			char 		buffer[1024];
+			int	 		rc;
+			int 		counter;
+			
+			
+			rc = 0;
+			counter = 0;
+
+			// Initialize buffer data.
+			std::memset(&buffer, 0, sizeof(buffer));
+
+			// Request
+			ft::Socket *socket = _findCd(_fds[i].fd);
+
+			// Receive data on this connection until the
+			// recv fails with EWOULDBLOCK. if any other
+			// failure occurs, we will close the connection
+			rc = recv(_fds[i].fd, buffer, 1024, 0);
+			if (rc < 0) {
+				std::cout << "Error: recv error." << std::endl;
+				return (false);
+			}
+				
+			// Check to see if the connection has been
+			// closed by the client
+			if (rc == 0) {
+				std::cout << "[" << _getTimestamp() << "]: Connection closed." << std::endl;
+				return (false);
+			}
+
+			// Data was received
+			std::cout << "[" << _getTimestamp() << "]: " << rc << " Bytes received." << std::endl;
+
+
+			std::stringstream newBuffer(buffer);
+			std::memset(&buffer, 0, sizeof(buffer));
+
+			while (getline(newBuffer, myText)) {
+				if (_reqM[_fds[i].fd].empty() && counter == 0)
+				{
+					counter++;
+					_reqM[_fds[i].fd] = (myText);
+				}
+				else
+					_reqVec[_fds[i].fd].push_back(myText);
+			}
+			_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
+			_reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
+
+			if (_reqMap[_fds[i].fd].is_complete())
+				_fds[i].events = POLLOUT;
+			return (true);
+		}
+
+		void		_reset_send(int i) {
+			_reqMap.erase(_fds[i].fd);
+			_reqVec.erase(_fds[i].fd);
+			_reqM.erase(_fds[i].fd);
+			_resMap[_fds[i].fd].streamClose();
+			_resMap.erase(_fds[i].fd);
+			_flag = 0;
+			return ;
+		}
+
+		/** @brief Send data
+		 * Send all data to the client
+		 * in chunked way
+		 * 
+		 * @param 
+		 * @return none
+		 */
+		bool	_send_data(int i) {
+			// Getting respond
+							
+			std::pair<std::string, int>		res;
+			ft::Socket						*socket;
+			int 							ret;
+			int 							size;
+			
+			size = 0;
+			socket =  _findCd(_fds[i].fd);
+			res.first = "";
+			
+			if (_flag == 0) {
+				_reqMap.erase(_fds[i].fd);
+				_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
+				std::pair<string, int> a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
+				_resMap[_fds[i].fd].confRespond(socket->getServerConfig(), _reqMap[_fds[i].fd], a);
+				res = _resMap[_fds[i].fd].SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, a.second);
+				std::cout << res.first << std::endl;
+			}
+			else {
+				res = _resMap[_fds[i].fd].readStream();
+			}
+			ret = send(_fds[i].fd, res.first.c_str(), res.second, 0);
+			std::cout << ret << " " << res.second << std::endl;
+			if (ret == 0) {
+				std::cout << " RETURN IS ZERO " << std::endl;
+				return (false);
+			}
+			if (ret < 0) {
+				std::cout << " RETURN IS BELOW ZERO " << ret << std::endl;
+				return (false);
+			}
+				
+			if (_flag == 0) {
+				ret = 0;
+				_flag = 1;
+			}
+			if (_resMap[_fds[i].fd].is_done(ret)) {
+				std::cout << "STREAM IS DONE" << std::endl;
+				_flag = 0;
+				if (_reqMap[_fds[i].fd].getDetails()["Connection"] == "close") {
+					std::cout << _reqMap[_fds[i].fd].getDetails()["Connection"] << std::endl;
+					return (false);
+				} else {
+					std::cout << " SEND IS DONE " << std::endl;
+					_fds[i].events = POLLIN;
+				}
+				_reset_send(i);
+			}
+			return (true);
+		}
 	public:
 		/** @brief Default constructor
 		 * Construct an empty Socket io class
@@ -118,18 +296,20 @@ namespace ft {
 		 * @param vector
 		 * @return none
 		 */
-		SocketIO(vector const &sockets) : _timeout(3 * 60 * 1000), _close_conn(), _nfds(sockets.size()),
+		SocketIO(vector const &sockets) : _timeout(3 * 60 * 1000), _close_conn(),
 										  _current_size(0), _desc_ready(), _end_server(false), _compress_array(false),
-										  _sockets(sockets), _reqVec(mapi()), _reqM(maps()), _reqMap(map()), _resMap(respond_map()){
+										  _sockets(sockets), _reqVec(mapi()), _reqM(maps()), _reqMap(map()), _resMap(respond_map()), _flag(0){
 			// Initializing the fds poll array with zeros.
-			std::memset(_fds, 0, sizeof(_fds));
+			// std::memset(_fds, -1, sizeof(_fds));
 			// Init types
 			coock_types();
 			// Adding all server sockets into the poll array
 			for (int i = 0; i < sockets.size(); i++) {
-				_sockets[i].startSocket();
-				_fds[i].fd = _sockets[i].getSocketSd();
-				_fds[i].events = POLLIN;
+				struct pollfd fds;
+				 _sockets[i].startSocket();
+				fds.fd =_sockets[i].getSocketSd();
+				fds.events = POLLIN;
+				_fds.push_back(fds);
 			}
 			return;
 		}
@@ -145,7 +325,6 @@ namespace ft {
 			// Close all server sockets that are still open
 			// before ending the server.
 			for (int i = 0; i < _sockets.size(); i++) close(_sockets[i].getSocketSd());
-			_nfds = 0;
 		}
 
 		/** @brief coock types
@@ -175,6 +354,8 @@ namespace ft {
 				split(mytext, " ");
 		}
 
+		
+
 		/** @brief start poll server
 		 * Starting poll multiple server
 		 *
@@ -183,15 +364,20 @@ namespace ft {
 		 */
 		void startServer(void) {
 			int new_sd = -1;
-			char buffer[1024];
+			
 			int len = 1;
 			int rc = 1;
 
 			std::cout << "[" << _getTimestamp() << "]: Servers are starting..." << std::endl;
 			do {
+				
 				// Call poll() and wait 3 minutes for it to complete.
-				rc = poll(_fds, _nfds, _timeout);
+				rc = poll(&_fds.front(), _fds.size(), _timeout);
 
+				for (int i = 0; i < _fds.size() ; i++) {
+					std::cout << _fds[i].fd << " " << _fds[i].events << " " << _fds[i].revents << std::endl;
+				}
+				
 				// Check to see if the poll call failed.
 				if (rc < 0) {
 					std::cerr << "[" << _getTimestamp() << "]: Error, Poll failed." << std::endl;
@@ -202,9 +388,10 @@ namespace ft {
 					std::cerr << "[" << _getTimestamp() << "]: Error, timeout." << std::endl;
 					break;
 				}
+				
 				// One or more descriptors are readable. Need to
 				// determine which ones they are
-				for (int i = 0; i < _nfds; i++) {
+				for (int i = 0; i < _fds.size(); i++) {
 					// Loop through to find the descriptors that returned
 					// POLLIN and determine whether it's the listening
 					// or the active connection.
@@ -212,109 +399,31 @@ namespace ft {
 						continue;
 
 					if (_isListenSd(_fds[i].fd)) {
-						// Listening descriptor is readable.
-						std::cout << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Has a incomming connection."
-						<< std::endl;
-						// Accept all incoming connections that are
-						// queued up on the listening socket before we
-						// loop back and call poll again
-						do {
-							// Accept each incoming connection. if
-							// accept fails with EWOULDBLOCK, then we
-							// have accepted all of them. Any other
-							// failure on accept will cause us to end
-							// the server.
-							new_sd = _findSd(_fds[i].fd)->accepts();
-							if (new_sd < 0) {
-								break;
-							}
-							// Add the new incoming connection to
-							// the pollfd structure
-							std::cout << "[" << _getTimestamp() << "]: New incoming connection " << new_sd
-							<< std::endl;
-							_fds[_nfds].fd = new_sd;
-							_fds[_nfds].events = POLLIN;
-							_nfds++;
-							// Loop back up and accept another incoming
-							// connection.
-						} while (new_sd >= 0);
-					} else if (_fds[i].revents == POLLIN){
-							// Receive data on this connection until the
-							// recv fails with EWOULDBLOCK. if any other
-							// failure occurs, we will close the connection
-							do {
-								rc = recv(_fds[i].fd, buffer, sizeof(buffer), 0);
-								if (rc < 0)
-									break;
-								// Check to see if the connection has been
-								// closed by the client
-								if (rc == 0) {
-									std::cout << "[" << _getTimestamp() << "]: Connection closed." << std::endl;
-									_close_conn = true;
-									break;
-								}
-								// Data was received
-								std::cout << "[" << _getTimestamp() << "]: " << rc << " Bytes received." << std::endl;
-
-								// Request
-								ft::Socket *socket = _findCd(_fds[i].fd);
-//								socket->getMappedRed()[_fds[i].fd] = "";
-
-								int 						counter;
-								string 						myText;
-								string 						method;
-								const char					*res;
-
-								counter = 0;
-								std::stringstream newBuffer(buffer);
-								std::memset(&buffer, 0, sizeof(buffer));
-
-								while (getline(newBuffer, myText)) {
-									if (_reqM[_fds[i].fd].empty() && counter == 0)
-									{
-										counter++;
-										_reqM[_fds[i].fd] = (myText);
-									}
-									else
-										_reqVec[_fds[i].fd].push_back(myText);
-								}
-								_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
-								_reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
-
-								if (_reqMap[_fds[i].fd].is_complete()) {
-									_fds[i].events = POLLOUT;
-								}
-								_close_conn = true;
-							} while (!_close_conn);
-					}
-					if (_fds[i].revents == POLLOUT) {
-							// Getting respond
-
-							ft::Socket *socket = _findCd(_fds[i].fd);
-							_reqMap.erase(_fds[i].fd);
-							_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
-							std::pair<string, int> a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
-							_resMap[_fds[i].fd].confRespond(socket->getServerConfig(), _reqMap[_fds[i].fd], a);
-							std::pair<std::string, int> pa = _resMap[_fds[i].fd].SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, a.second);
-
-
-							rc = send(_fds[i].fd, pa.first.c_str(), pa.second, 0);
-							if (_resMap[_fds[i].fd].is_done(rc)) {
-								_fds[i].events = POLLIN;
-//								_fds[i].revents = POLLIN;
-								_reqVec.erase(_fds[i].fd);
-								_reqM.erase(_fds[i].fd);
-							}
-
-
-					}else if (_fds[i].revents & (POLLERR | POLLNVAL)) {
-						printf("socket error\n");
-						break;
-					}
+						_accept_clients(i);
+					} else if (_fds[i].revents & POLLERR || _fds[i].revents & POLLNVAL || _fds[i].revents & POLLHUP) {
+						std::cerr << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Connection closed." << std::endl;
+						ft::Socket *socket = _findCd(_fds[i].fd);
+						socket->rmClient(_fds[i].fd);
+						close(_fds[i].fd);
+						_fds.erase(_fds.begin() + i);
+					} else if (_fds[i].revents == POLLIN) {
+						if (!_recv_data(i)) {
+							_fds[i].events = POLLHUP;
+							continue;
+						}
+						std::cout << "RECV DONE" << std::endl;
+					} else if (_fds[i].revents == POLLOUT) {
+						if (!_send_data(i)) {
+							 
+							_fds[i].events = POLLHUP;
+							continue;
+						}
+						std::cout << "SEND ALMOST DONE" << std::endl;
+					} 
 				}
 			} while (!_end_server);
 			// Clean up all of the sockets that are open
-			for (int i = 0; i < _nfds; i++) {
+			for (int i = 0; i < _fds.size(); i++) {
 				if (_fds[i].fd >= 0)
 					close(_fds[i].fd);
 			}

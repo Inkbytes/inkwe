@@ -43,7 +43,7 @@ namespace ft {
 			vector					_clientsd; // Vector of client socket descriptors
 			char const				*_ipaddr; 	// Ip address
 			uint const				_port;		// Port
-			sockaddrs				_address; 	// Internet Address
+			struct sockaddr_in				_address; 	// Internet Address
 			ft::ServerConfig			_serverConfig; // Server configuration
 			char					buffer[1024];
 
@@ -145,11 +145,10 @@ namespace ft {
 			 */
 			bool	rmClient(int clientsd) {
 				std::vector<int>::iterator it = _clientsd.begin();
-				for (;it != _clientsd.end();it++) {
+				for (;it != _clientsd.end();++it) {
 					if (*it == clientsd)
 						break;
 				}
-				
 				_clientsd.erase(it);
 				return (true);
 			}
@@ -211,7 +210,7 @@ namespace ft {
 			 */
 			int		accepts() {
 				int	clientsd;
-
+			
 				clientsd = accept(_socketsd, NULL, NULL);
 				if (clientsd != -1)
 					setClient(clientsd);
