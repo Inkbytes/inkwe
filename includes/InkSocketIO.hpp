@@ -267,7 +267,7 @@ namespace ft {
 			if (_resMap[_fds[i].fd].is_done(ret)) {
 				std::cout << "STREAM IS DONE" << std::endl;
 				_flag = 0;
-				if (_reqMap[_fds[i].fd].getDetails()["Connection"] == "close") {
+				if (_reqMap[_fds[i].fd].getDetails()["Connection"] != "keep-alive") {
 					std::cout << _reqMap[_fds[i].fd].getDetails()["Connection"] << std::endl;
 					return (false);
 				} else {
@@ -352,6 +352,7 @@ namespace ft {
 			buffer << file.rdbuf();
 			while (getline(buffer, mytext))
 				split(mytext, " ");
+			file.close();
 		}
 
 		
@@ -399,14 +400,15 @@ namespace ft {
 						continue;
 
 					if (_isListenSd(_fds[i].fd)) {
-						_accept_clients(i);
+							_accept_clients(i);
 					} else if (_fds[i].revents & POLLERR || _fds[i].revents & POLLNVAL || _fds[i].revents & POLLHUP) {
 						std::cerr << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Connection closed." << std::endl;
 						ft::Socket *socket = _findCd(_fds[i].fd);
 						socket->rmClient(_fds[i].fd);
 						close(_fds[i].fd);
 						_fds.erase(_fds.begin() + i);
-					} else if (_fds[i].revents == POLLIN) {
+					} 
+					else if (_fds[i].revents == POLLIN) {
 						if (!_recv_data(i)) {
 							_fds[i].events = POLLHUP;
 							continue;
@@ -414,8 +416,13 @@ namespace ft {
 						std::cout << "RECV DONE" << std::endl;
 					} else if (_fds[i].revents == POLLOUT) {
 						if (!_send_data(i)) {
-							 
+							_reset_send(i);
 							_fds[i].events = POLLHUP;
+							std::cerr << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Connection closed." << std::endl;
+							ft::Socket *socket = _findCd(_fds[i].fd);
+							socket->rmClient(_fds[i].fd);
+							close(_fds[i].fd);
+							_fds.erase(_fds.begin() + i);
 							continue;
 						}
 						std::cout << "SEND ALMOST DONE" << std::endl;

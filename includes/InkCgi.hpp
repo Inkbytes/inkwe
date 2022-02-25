@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 12:15:28 by oel-ouar          #+#    #+#             */
-/*   Updated: 2022/02/25 18:15:49 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/02/25 18:16:54 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,7 @@ class InkCgi
             std::string cgibuffer ="";
             FILE  *file;
             char a;
-            args[0] =_lang.c_str();
+            args[0] =(char*)_lang.c_str();
             args[1] = (char*)scriptName.c_str();
             args[2] = NULL;
             int fd[2];
