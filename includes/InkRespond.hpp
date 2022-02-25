@@ -53,6 +53,11 @@ namespace ft {
 
 			// Set respond
 			void confRespond(const ft::ServerConfig &conf, const ft::request &req, const std::pair<std::string, int> &a) {
+				_err = 0;
+				_cgi = 0;
+				_file_size = 0;
+				_current_size = 0;
+				_flag = false;
 				// check if its a valid request nethod
 				std::string file;
 				if (a.first == "200")
