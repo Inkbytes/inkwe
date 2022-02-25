@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 12:15:28 by oel-ouar          #+#    #+#             */
-/*   Updated: 2022/02/15 08:04:28 by                  ###   ########.fr       */
+/*   Updated: 2022/02/25 18:15:49 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,7 @@ namespace  ft {
 class InkCgi
 {
     private:
-        char **env;
-        char *_lang;
+        std::string _lang;
         std::string scriptName;
     
     public:
@@ -68,9 +67,9 @@ class InkCgi
             setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
             setenv("REDIRECT_STATUS", "true", 1);
             if (req.getScriptName().find(".php") != std::string::npos)
-                _lang = strdup("/Users/oel-ouar/.brew/bin/php-cgi");
+                _lang = "/Users/oel-ouar/.brew/bin/php-cgi";
             else if (req.getScriptName().find(".py") != std::string::npos)
-                _lang = strdup("/usr/bin/python");
+                _lang = "/usr/bin/python";
         }
         
         std::pair<std::string,std::string> execCgi(request req)
@@ -82,7 +81,7 @@ class InkCgi
             std::string cgibuffer ="";
             FILE  *file;
             char a;
-            args[0] =_lang;
+            args[0] =_lang.c_str();
             args[1] = (char*)scriptName.c_str();
             args[2] = NULL;
             int fd[2];

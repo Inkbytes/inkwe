@@ -65,6 +65,5 @@ int main( int args, char **argv ) {
 	catch (std::exception &e) {
 		std::cout << e.what() << std::endl;
 	}
-	std::cout << " HELLO " << std::endl;
 	return (0);
 }

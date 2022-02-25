@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/02/17 10:35:00 by                  ###   ########.fr       */
+/*   Updated: 2022/02/25 18:11:23 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,8 +47,9 @@ namespace ft {
 			{
 				std::string body;
 				int flag = 0;
-
-				method.erase(method.find('\r'));
+				if (method.find('\r')!=std::string::npos)
+					method.erase(method.find('\r'));
+				std::cout << method <<std::endl;
 				splitMethod(method);
 				int pos = splitPath(_path, conf);
 				std::vector<std::string>::iterator ite = myVec.end();
@@ -72,7 +73,8 @@ namespace ft {
 				// parse every details of the request into a map with akey and value
 				for (; it != ite; it++)
 				{
-					(*it).erase((*it).find('\r'));
+					if ((*it).find('\r')!=std::string::npos)
+						(*it).erase((*it).find('\r'));
 					if (*it == "")
 					{
 						it++;
