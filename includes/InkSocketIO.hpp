@@ -391,7 +391,7 @@ namespace ft {
 						continue;
 
 					if (_isListenSd(_fds[i].fd)) {
-						_accept_clients(i);
+							_accept_clients(i);
 					} else if (_fds[i].revents & POLLERR || _fds[i].revents & POLLNVAL || _fds[i].revents & POLLHUP) {
 						std::cerr << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Connection closed." << std::endl;
 						ft::Socket *socket = _findCd(_fds[i].fd);
@@ -399,13 +399,19 @@ namespace ft {
 						close(_fds[i].fd);
 						_fds[i].fd = -1;
 						_fds.erase(_fds.begin() + i);
-					} else if (_fds[i].revents == POLLIN) {
+					} 
+					else if (_fds[i].revents == POLLIN) {
 						if (!_recv_data(i)) {
 							_fds[i].events = POLLHUP;
 						}
 					} else if (_fds[i].revents == POLLOUT) {
 						if (!_send_data(i)) {
 							_fds[i].events = POLLHUP;
+							std::cerr << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Connection closed." << std::endl;
+							ft::Socket *socket = _findCd(_fds[i].fd);
+							socket->rmClient(_fds[i].fd);
+							close(_fds[i].fd);
+							_fds.erase(_fds.begin() + i);
 							continue;
 						}
 					} 

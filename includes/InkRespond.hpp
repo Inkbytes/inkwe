@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/22 09:56:30 by                   #+#    #+#             */
-/*   Updated: 2022/02/21 10:36:54 by                  ###   ########.fr       */
+/*   Updated: 2022/02/25 18:51:10 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,8 +192,6 @@ namespace ft {
 						int tmp;
 						_stream.open(opn, std::ios::in | std::ios::binary | std::ios::ate);
 
-						if (_stream.is_open())
-							std::cout << "TRUE OPEN." << std::endl;
 						std::cout << opn << std::endl;
 						_file_size = _stream.tellg();
 						_current_size = 0;
@@ -240,15 +238,17 @@ namespace ft {
 			}
 			std::pair<std::string, bool>
 			check_autoIndex(const std::string &urlPath, const std::string &path, const ft::Location &location) {
+				int d = -1;
+				
 				if (location.getAutoIndex()) {
 					ft::AutoIndex aut(urlPath, path);
 					if (opendir(path.c_str()) != nullptr) {
 						return (std::make_pair(aut.baseHref(), 1));
-					} else if (int d = open(path.c_str(), O_RDONLY) != -1) {
+					} else if ((d = open(path.c_str(), O_RDONLY)) != -1) {
 						return (std::make_pair("", 1));
 					}
 				}
-
+				close(d);
 				return (std::make_pair("", 0));
 			}
 

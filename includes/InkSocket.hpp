@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/11 12:51:54 by f0rkr             #+#    #+#             */
-/*   Updated: 2022/02/16 09:48:14 by                  ###   ########.fr       */
+/*   Updated: 2022/02/25 18:26:22 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,7 +192,7 @@ namespace ft {
 			 * @return none
 			 */
 			void	listens( void ) const {
-				if (listen(_socketsd, 1) < 0) {
+				if (listen(_socketsd, 1024) < 0) {
 					std::cout << "[" << getTimestamp() << "]: Error can't listen on socket." << std::endl;
 					return ;
 				}
