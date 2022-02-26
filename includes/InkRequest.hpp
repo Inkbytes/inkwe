@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/02/25 18:11:23 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/02/26 18:24:16 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include <exception>
 # include "webserv.hpp"
 # include "InkServerConfig.hpp"
+#include <fstream>
 
 namespace ft {
 	class request
@@ -69,6 +70,7 @@ namespace ft {
 				}
 				if (_serverProtocol != "HTTP/1.1")
 					return (std::make_pair("HTTP/1.1 505 SERVER HTTP VERSION NOT SUPPORTED\n", 505));
+				// HTTP cache not found
 				
 				// parse every details of the request into a map with akey and value
 				for (; it != ite; it++)
@@ -84,9 +86,15 @@ namespace ft {
 						if (split(*it, ": ") == -1)
 							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", 400));
 				}
-				
+				if (_details.find("Content-Disposition") != _details.end() && _details.find("Content-Disposition")->second.find("form-data") != std::string::npos)
+				{
+					std::ofstream mfile(conf.getLocations()[pos].getRoot()+"/hello.txt");
+					for (;it!=ite;it++)
+						mfile << *it;
+					mfile.close();
+				}
 				// set POST body
-				if (_query.length()==0 && it != ite && _method == "POST") {
+				else if (_query.length()==0 && it != ite && _method == "POST") {
 					// chunked request 
 					if (_details.find("Transfer-Encoding")->second == "chunked")
 					{
@@ -125,6 +133,7 @@ namespace ft {
 					{
 						for (;it!=ite;it++)
 							_query+= *it;
+						std::cout << _query << "   query\n";
 						_complete = 1;
 					}
 					if (_query.length() > conf.getBodySizeLimit())

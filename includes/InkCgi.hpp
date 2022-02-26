@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 12:15:28 by oel-ouar          #+#    #+#             */
-/*   Updated: 2022/02/25 18:16:54 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/02/26 16:31:25 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ class InkCgi
             setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
             setenv("REDIRECT_STATUS", "true", 1);
             if (req.getScriptName().find(".php") != std::string::npos)
-                _lang = "/Users/mashad/.brew/bin/php-cgi";
+                _lang = "/Users/oel-ouar/.brew/bin/php-cgi";
             else if (req.getScriptName().find(".py") != std::string::npos)
                 _lang = "/usr/bin/python";
         }
@@ -112,7 +112,6 @@ class InkCgi
                 time_t t = time(NULL);
                 while ( time(NULL) - t < 5) {
                     pid_t r = waitpid(pid, &stat, WNOHANG);
-					// std::cout << r << std::endl;
                     if (r && r!=-1) 
                     {
                         close(fd[1]);

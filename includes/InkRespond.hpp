@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/22 09:56:30 by                   #+#    #+#             */
-/*   Updated: 2022/02/25 18:51:10 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/02/26 18:28:15 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,7 @@ namespace ft {
 					// DELETE request
 					else if (req.getMethod()=="DELETE")
 					{
+						std::cout << "HERE" << std::endl;
 						if (remove(req.getScriptName().c_str()) == 0)
 						{
 							_status = "403";
@@ -169,12 +170,14 @@ namespace ft {
 				}
 				else 
 					opn = filePath;
-				/// here
 
 				if (_cgi ==1 && _err==0 && Autoindex.second == 0)
 				{
 					if (req.getScriptName().find(".php") != std::string::npos)
-						_ret = _ret +_status;
+					{
+						std::string l = To_string(_status.substr(_status.find("\r\n\r\n")+4, _status.length()).length());
+						_ret = _ret +"Content-Length: "+ l +"\r\n" +_status;
+					}
 					else
 						_ret += To_string(_status.length()) + "\r\n\r\n" +_status;
 					size = _ret.length();
@@ -191,8 +194,6 @@ namespace ft {
 						int i;
 						int tmp;
 						_stream.open(opn, std::ios::in | std::ios::binary | std::ios::ate);
-
-						std::cout << opn << std::endl;
 						_file_size = _stream.tellg();
 						_current_size = 0;
 						size = 0;
