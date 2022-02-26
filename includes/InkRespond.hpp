@@ -38,12 +38,13 @@ namespace ft {
 			std::ifstream 	_stream;
 			size_type		_header_size;
 			bool 			_flag;
+			bool			_readstream;
 			InkRespond& 	operator=(const InkRespond& op);
 		public:
-			InkRespond(void) : _err(0), _cgi(0), _file_size(0), _current_size(0), _flag(false){
+			InkRespond(void) : _err(0), _cgi(0), _file_size(0), _current_size(0), _flag(false), _readstream(false){
 				return;
 			}
-			InkRespond(const InkRespond &copy): _err(0), _cgi(0), _file_size(0), _current_size(0), _flag(false) {
+			InkRespond(const InkRespond &copy): _err(0), _cgi(0), _file_size(0), _current_size(0), _flag(false), _readstream(false){
 				return ;
 			}
 			explicit InkRespond(const ft::ServerConfig &conf, const ft::request &req, const std::pair<std::string, int> &a) : _err(
@@ -53,11 +54,13 @@ namespace ft {
 
 			// Set respond
 			void confRespond(const ft::ServerConfig &conf, const ft::request &req, const std::pair<std::string, int> &a) {
+
 				_err = 0;
 				_cgi = 0;
 				_file_size = 0;
 				_current_size = 0;
 				_flag = false;
+				_readstream = false;
 				// check if its a valid request nethod
 				std::string file;
 				if (a.first == "200")
@@ -88,6 +91,7 @@ namespace ft {
 						InkCgi cgi(req, conf.getLocations()[a.second]);
 						p = cgi.execCgi(req);
 						_status = p.first;
+						_ret = 
 						_ret = p.second;
 						if (_status[0] == '4' || _status[0]=='5')
 							_err = 1;
@@ -182,6 +186,7 @@ namespace ft {
 						size = _ret.length();
 						_flag = true;
 					} else {
+						
 						// MOD
 						int i;
 						int tmp;
@@ -230,6 +235,9 @@ namespace ft {
 			size_type	getHeaderSize( void ) const {
 				return (_header_size);
 			}
+			bool		getFlag( void ) const {
+				return (_flag);
+			}
 			std::pair<std::string, bool>
 			check_autoIndex(const std::string &urlPath, const std::string &path, const ft::Location &location) {
 				if (location.getAutoIndex()) {
@@ -245,9 +253,7 @@ namespace ft {
 			}
 
 			bool is_done(size_type position) {
-				if (_stream.eof() || _flag == true) {
-					std::cout << _flag << std::endl;
-					std::cout << " HERE " << std::endl;
+				if (_stream.eof() || _flag == true || _cgi == 1) {
 					_flag = false;
 					return (true);
 				}
@@ -255,7 +261,9 @@ namespace ft {
 				_stream.seekg(_current_size, std::ios::beg);
 				return (false);
 			}
-
+			bool	getReadStream(void) const {
+				return (_readstream);
+			}
 		private:
 			template<class T>
 			std::string To_string(T n) {

@@ -24,6 +24,7 @@ namespace ft {
 		typedef std::map<int, request>	map;
 		typedef std::map<int, std::vector<string> > mapi;
 		typedef std::map<int, string>				maps;
+		typedef std::map<int, bool>					mapcheck;
 	private:
 		int _timeout;
 		int _close_conn;
@@ -35,13 +36,12 @@ namespace ft {
 		map								_reqMap;
 		std::map<std::string, std::string> _types;
 		respond_map 					_resMap;
-		int 							_flag;
-
 		// struct pollfd _fds[200];
 		std::vector<pollfd> _fds;
 //		map		_req;
 		mapi	_reqVec;
 		maps	_reqM;
+		mapcheck						_isReadStream;
 
 		/** @brief Timestamp method
 		 * Return timestamp
@@ -173,6 +173,7 @@ namespace ft {
 			// recv fails with EWOULDBLOCK. if any other
 			// failure occurs, we will close the connection
 			rc = recv(_fds[i].fd, buffer, 1024, 0);
+			std::cout << buffer << std::endl;
 			if (rc < 0) {
 				std::cout << "Error: recv error." << std::endl;
 				return (false);
@@ -215,7 +216,7 @@ namespace ft {
 			_reqM.erase(_fds[i].fd);
 			_resMap[_fds[i].fd].streamClose();
 			_resMap.erase(_fds[i].fd);
-			_flag = 0;
+			_isReadStream[_fds[i].fd] = 0;
 			return ;
 		}
 
@@ -238,40 +239,30 @@ namespace ft {
 			socket =  _findCd(_fds[i].fd);
 			res.first = "";
 			
-			if (_flag == 0) {
+			if (_isReadStream[_fds[i].fd] == 0) {
 				_reqMap.erase(_fds[i].fd);
 				_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
 				std::pair<string, int> a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
 				_resMap[_fds[i].fd].confRespond(socket->getServerConfig(), _reqMap[_fds[i].fd], a);
 				res = _resMap[_fds[i].fd].SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, a.second);
 				std::cout << res.first << std::endl;
-			}
-			else {
+			} else {
 				res = _resMap[_fds[i].fd].readStream();
 			}
 			ret = send(_fds[i].fd, res.first.c_str(), res.second, 0);
-			std::cout << ret << " " << res.second << std::endl;
-			if (ret == 0) {
-				std::cout << " RETURN IS ZERO " << std::endl;
+			std::cout << ret << std::endl;
+			if (ret == 0 || ret < 0) {
 				return (false);
 			}
-			if (ret < 0) {
-				std::cout << " RETURN IS BELOW ZERO " << ret << std::endl;
-				return (false);
-			}
-				
-			if (_flag == 0) {
+			if (_isReadStream[_fds[i].fd] == 0 && _resMap[_fds[i].fd].getFlag() != true) {
 				ret = 0;
-				_flag = 1;
+				_isReadStream[_fds[i].fd] = 1;
 			}
 			if (_resMap[_fds[i].fd].is_done(ret)) {
-				std::cout << "STREAM IS DONE" << std::endl;
-				_flag = 0;
-				if (_reqMap[_fds[i].fd].getDetails()["Connection"] == "close") {
-					std::cout << _reqMap[_fds[i].fd].getDetails()["Connection"] << std::endl;
+				if (_reqMap[_fds[i].fd].getDetails()["Connection"] != "keep-alive") {
+					_reset_send(i);
 					return (false);
 				} else {
-					std::cout << " SEND IS DONE " << std::endl;
 					_fds[i].events = POLLIN;
 				}
 				_reset_send(i);
@@ -298,7 +289,7 @@ namespace ft {
 		 */
 		SocketIO(vector const &sockets) : _timeout(3 * 60 * 1000), _close_conn(),
 										  _current_size(0), _desc_ready(), _end_server(false), _compress_array(false),
-										  _sockets(sockets), _reqVec(mapi()), _reqM(maps()), _reqMap(map()), _resMap(respond_map()), _flag(0){
+										  _sockets(sockets), _reqVec(mapi()), _reqM(maps()), _reqMap(map()), _resMap(respond_map()), _isReadStream(mapcheck()){
 			// Initializing the fds poll array with zeros.
 			// std::memset(_fds, -1, sizeof(_fds));
 			// Init types
@@ -352,6 +343,7 @@ namespace ft {
 			buffer << file.rdbuf();
 			while (getline(buffer, mytext))
 				split(mytext, " ");
+			file.close();
 		}
 
 		
@@ -384,10 +376,10 @@ namespace ft {
 					break;
 				}
 
-				if (rc == 0) {
-					std::cerr << "[" << _getTimestamp() << "]: Error, timeout." << std::endl;
-					break;
-				}
+				// if (rc == 0) {
+				// 	std::cerr << "[" << _getTimestamp() << "]: Error, timeout." << std::endl;
+				// 	break;
+				// }
 				
 				// One or more descriptors are readable. Need to
 				// determine which ones they are
@@ -405,20 +397,17 @@ namespace ft {
 						ft::Socket *socket = _findCd(_fds[i].fd);
 						socket->rmClient(_fds[i].fd);
 						close(_fds[i].fd);
+						_fds[i].fd = -1;
 						_fds.erase(_fds.begin() + i);
 					} else if (_fds[i].revents == POLLIN) {
 						if (!_recv_data(i)) {
 							_fds[i].events = POLLHUP;
-							continue;
 						}
-						std::cout << "RECV DONE" << std::endl;
 					} else if (_fds[i].revents == POLLOUT) {
 						if (!_send_data(i)) {
-							 
 							_fds[i].events = POLLHUP;
 							continue;
 						}
-						std::cout << "SEND ALMOST DONE" << std::endl;
 					} 
 				}
 			} while (!_end_server);

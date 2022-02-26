@@ -67,7 +67,7 @@ class InkCgi
             setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
             setenv("REDIRECT_STATUS", "true", 1);
             if (req.getScriptName().find(".php") != std::string::npos)
-                _lang = "/Users/oel-ouar/.brew/bin/php-cgi";
+                _lang = "/Users/mashad/.brew/bin/php-cgi";
             else if (req.getScriptName().find(".py") != std::string::npos)
                 _lang = "/usr/bin/python";
         }
@@ -81,8 +81,8 @@ class InkCgi
             std::string cgibuffer ="";
             FILE  *file;
             char a;
-            args[0] =_lang.c_str();
-            args[1] = (char*)scriptName.c_str();
+            args[0] = (char *)_lang.c_str();
+            args[1] = (char *)scriptName.c_str();
             args[2] = NULL;
             int fd[2];
             int fd1[2];
@@ -112,7 +112,7 @@ class InkCgi
                 time_t t = time(NULL);
                 while ( time(NULL) - t < 5) {
                     pid_t r = waitpid(pid, &stat, WNOHANG);
-					std::cout << r << std::endl;
+					// std::cout << r << std::endl;
                     if (r && r!=-1) 
                     {
                         close(fd[1]);
@@ -142,6 +142,7 @@ class InkCgi
                 return (std::make_pair(cgibuffer, "HTTP/1.1 302 Found\r\n"));
             else if (cgibuffer.find("Status: 301") != std::string::npos)
                 return (std::make_pair(cgibuffer, "HTTP/1.1 301 Moved Permanetly\r\n"));
+            
             return (std::make_pair(cgibuffer, "HTTP/1.1 200 OK\r\n"));
         }
     private:
