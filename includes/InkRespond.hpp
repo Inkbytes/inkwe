@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/22 09:56:30 by                   #+#    #+#             */
-/*   Updated: 2022/02/26 18:28:15 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/02/28 22:09:03 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ namespace ft {
 		private:
 			string 			_ret;
 			string 			_status;
+			string			_default_error;
 			size_type		_err;
 			size_type		_cgi;
 			size_type		_file_size;
@@ -42,6 +43,7 @@ namespace ft {
 			InkRespond& 	operator=(const InkRespond& op);
 		public:
 			InkRespond(void) : _err(0), _cgi(0), _file_size(0), _current_size(0), _flag(false), _readstream(false){
+				
 				return;
 			}
 			InkRespond(const InkRespond &copy): _err(0), _cgi(0), _file_size(0), _current_size(0), _flag(false), _readstream(false){
@@ -54,13 +56,15 @@ namespace ft {
 
 			// Set respond
 			void confRespond(const ft::ServerConfig &conf, const ft::request &req, const std::pair<std::string, int> &a) {
-
 				_err = 0;
 				_cgi = 0;
 				_file_size = 0;
 				_current_size = 0;
 				_flag = false;
 				_readstream = false;
+				char get[1024];
+				getcwd(get,1024);
+				_default_error = To_string(get)+"/var/www/pages/";
 				// check if its a valid request nethod
 				std::string file;
 				if (a.first == "200")
@@ -101,8 +105,8 @@ namespace ft {
 					// DELETE request
 					else if (req.getMethod()=="DELETE")
 					{
-						std::cout << "HERE" << std::endl;
-						if (remove(req.getScriptName().c_str()) == 0)
+						std::string rm = conf.getLocations()[a.second].getRoot() + "/"+req.getScriptName();
+						if (remove(rm.c_str()) == -1)
 						{
 							_status = "403";
 							_ret = "HTTP/1.1 403 Not Allowed\n";
@@ -127,6 +131,7 @@ namespace ft {
 			std::pair<std::string, std::streampos>
 			SetRespond(const ft::request &req, const ft::ServerConfig &conf, std::map<std::string, std::string> types,
 					   int locationPos) {
+				
 				std::string opn;
 				std::string ext;
 				std::string scriptname;
@@ -150,8 +155,10 @@ namespace ft {
 					ext = "";
 				if (Autoindex.second == 1 && Autoindex.first.length() == 0)	
 					_headers.push_back("Content-Disposition: attachment\r\n");
-				if (req.getMethod()=="DELETE" && _status == "204")
+				if (req.getMethod()=="DELETE" && _status == "204") {
+					_flag = true;
 					return (std::make_pair(_ret, _ret.length()));
+				}
 				else if (types.find(ext)!=types.end() && _err==0)
 					_headers.push_back("Content-Type: "+types.find(ext)->second+"\r\nContent-Length: ");
 				else
@@ -163,11 +170,6 @@ namespace ft {
 				}
 				if (_err==1 && conf.getDefaultErrorPagePath() != "")
 					opn = conf.getFullPath() + conf.getDefaultErrorPagePath()+ "/" +_status+".html";
-				else if (_err == 1)
-				{
-					_ret = _ret + "3\r\n\r\n"+ _status;
-					return (std::make_pair(_ret, _ret.length()));
-				}
 				else 
 					opn = filePath;
 
@@ -189,18 +191,20 @@ namespace ft {
 						size = _ret.length();
 						_flag = true;
 					} else {
-						
-						// MOD
 						int i;
 						int tmp;
 						_stream.open(opn, std::ios::in | std::ios::binary | std::ios::ate);
+						if (_err == 1 && _stream.fail())
+						{
+							opn = _default_error +_status+".html";
+							_stream.open(opn, std::ios::in | std::ios::binary | std::ios::ate);
+						}
 						_file_size = _stream.tellg();
 						_current_size = 0;
 						size = 0;
 						_stream.seekg(0, std::ios::beg);
 						_ret += To_string(_file_size) + "\r\n\r\n";
 						size += _ret.length();
-						// END MOD
 					}
 				}
 				return (std::make_pair(_ret, size));
@@ -212,7 +216,6 @@ namespace ft {
 				int 			i;
 				std::string	ret = "";
 
-				std::cout << "READING FILE"<< std::endl;
 				std::memset(&file, 0, 2048*100);
 				for (i = 0; i < 2048*100 && !_stream.eof() ; i++)
 					_stream.get(file[i]);
@@ -222,7 +225,6 @@ namespace ft {
 				for (i = 0; i < tmp; i++)
 					ret.push_back(file[i]);
 				std::memset(file, 0, 2048*10);
-				std::cout << "READING IS DONE" << std::endl;
 				return (std::make_pair(ret, size));
 			}
 
@@ -254,7 +256,7 @@ namespace ft {
 			}
 
 			bool is_done(size_type position) {
-				if (_stream.eof() || _flag == true || _cgi == 1) {
+				if (_stream.eof() || _flag == true) {
 					_flag = false;
 					return (true);
 				}

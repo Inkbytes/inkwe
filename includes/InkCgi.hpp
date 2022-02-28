@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 12:15:28 by oel-ouar          #+#    #+#             */
-/*   Updated: 2022/02/26 16:31:25 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/02/28 22:06:33 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,7 @@ class InkCgi
             else
             {
                 time_t t = time(NULL);
-                while ( time(NULL) - t < 5) {
+                while ( time(NULL) - t < 3) {
                     pid_t r = waitpid(pid, &stat, WNOHANG);
                     if (r && r!=-1) 
                     {
@@ -130,6 +130,7 @@ class InkCgi
                 {
                     kill(pid, SIGKILL);
                     close(fd[1]);
+                    close(fd[0]);
                     close(fd1[0]);
                     close(fd1[1]);
                     return(std::make_pair("500", "HTTP/1.1 500 Internal Server Error\r\n"));

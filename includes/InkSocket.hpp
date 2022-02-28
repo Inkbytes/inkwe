@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/11 12:51:54 by f0rkr             #+#    #+#             */
-/*   Updated: 2022/02/25 18:26:22 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/02/28 19:09:46 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,15 +94,6 @@ namespace ft {
 			 */
 			~Socket( void ) { 
 				// TO-DO: Reset to zero all attributes and deallocate all memory allocations.
-				std::memset(&_address, 0, sizeof(_address));
-				_ipaddr = NULL;
-				
-				// Closing all client socket descriptors that are still open.
-				for (size_t i = 0; i < _clientsd.size() ; i++) {
-					if (_clientsd[i] >= 0)
-						close(_clientsd[i]);
-				}
-				close(_socketsd);
 				return ;
 			}
 

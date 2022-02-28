@@ -38,10 +38,12 @@ namespace ft {
 		respond_map 					_resMap;
 		// struct pollfd _fds[200];
 		std::vector<pollfd> _fds;
+		std::pair<string, int>	_request_a;
 //		map		_req;
 		mapi	_reqVec;
 		maps	_reqM;
 		mapcheck						_isReadStream;
+		int								_counter;
 
 		/** @brief Timestamp method
 		 * Return timestamp
@@ -157,11 +159,9 @@ namespace ft {
 			string 		method;
 			char 		buffer[1024];
 			int	 		rc;
-			int 		counter;
 			
 			
 			rc = 0;
-			counter = 0;
 
 			// Initialize buffer data.
 			std::memset(&buffer, 0, sizeof(buffer));
@@ -173,7 +173,7 @@ namespace ft {
 			// recv fails with EWOULDBLOCK. if any other
 			// failure occurs, we will close the connection
 			rc = recv(_fds[i].fd, buffer, 1024, 0);
-			std::cout << buffer << std::endl;
+			// std::cout << buffer << std::endl;
 			if (rc < 0) {
 				std::cout << "Error: recv error." << std::endl;
 				return (false);
@@ -194,19 +194,30 @@ namespace ft {
 			std::memset(&buffer, 0, sizeof(buffer));
 
 			while (getline(newBuffer, myText)) {
-				if (_reqM[_fds[i].fd].empty() && counter == 0)
+				if (_reqM[_fds[i].fd].empty() && _counter == 0)
 				{
-					counter++;
+					_counter = 1;
 					_reqM[_fds[i].fd] = (myText);
 				}
 				else
 					_reqVec[_fds[i].fd].push_back(myText);
 			}
+			size_t k = 0;
+			// std::cout <<"**************************" << std::endl;
+			// for (size_t a = 10 ; a < _reqVec[_fds[i].fd].size() ; a++) {
+			// 	std::cout << _reqVec[_fds[i].fd][a] << std::endl;
+			// 	k += _reqVec[_fds[i].fd][a].length();
+			// }
+			// std::cout << " SIZE is " << k << std::endl;
+			// std::cout <<"**************************" << std::endl;
 			_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
-			_reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
-
-			if (_reqMap[_fds[i].fd].is_complete())
+			_request_a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
+			
+			if (_reqMap[_fds[i].fd].is_complete())  {
 				_fds[i].events = POLLOUT;
+				_counter = 0;
+			}
+				
 			return (true);
 		}
 
@@ -240,17 +251,14 @@ namespace ft {
 			res.first = "";
 			
 			if (_isReadStream[_fds[i].fd] == 0) {
-				_reqMap.erase(_fds[i].fd);
-				_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
-				std::pair<string, int> a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
-				_resMap[_fds[i].fd].confRespond(socket->getServerConfig(), _reqMap[_fds[i].fd], a);
-				res = _resMap[_fds[i].fd].SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, a.second);
-				std::cout << res.first << std::endl;
+				_resMap[_fds[i].fd].confRespond(socket->getServerConfig(), _reqMap[_fds[i].fd], _request_a);
+				res = _resMap[_fds[i].fd].SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, _request_a.second);
+				// std::cout << res.first << std::endl;
 			} else {
 				res = _resMap[_fds[i].fd].readStream();
 			}
 			ret = send(_fds[i].fd, res.first.c_str(), res.second, 0);
-			std::cout << ret << std::endl;
+			// std::cout << ret << std::endl;
 			if (ret == 0 || ret < 0) {
 				return (false);
 			}
@@ -294,6 +302,7 @@ namespace ft {
 			// std::memset(_fds, -1, sizeof(_fds));
 			// Init types
 			coock_types();
+			_counter = 0;
 			// Adding all server sockets into the poll array
 			for (int i = 0; i < sockets.size(); i++) {
 				struct pollfd fds;
@@ -366,9 +375,9 @@ namespace ft {
 				// Call poll() and wait 3 minutes for it to complete.
 				rc = poll(&_fds.front(), _fds.size(), _timeout);
 
-				for (int i = 0; i < _fds.size() ; i++) {
-					std::cout << _fds[i].fd << " " << _fds[i].events << " " << _fds[i].revents << std::endl;
-				}
+				// for (int i = 0; i < _fds.size() ; i++) {
+				// 	std::cout << _fds[i].fd << " " << _fds[i].events << " " << _fds[i].revents << std::endl;
+				// }
 				
 				// Check to see if the poll call failed.
 				if (rc < 0) {
@@ -403,15 +412,11 @@ namespace ft {
 					else if (_fds[i].revents == POLLIN) {
 						if (!_recv_data(i)) {
 							_fds[i].events = POLLHUP;
+							continue;
 						}
 					} else if (_fds[i].revents == POLLOUT) {
 						if (!_send_data(i)) {
 							_fds[i].events = POLLHUP;
-							std::cerr << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Connection closed." << std::endl;
-							ft::Socket *socket = _findCd(_fds[i].fd);
-							socket->rmClient(_fds[i].fd);
-							close(_fds[i].fd);
-							_fds.erase(_fds.begin() + i);
 							continue;
 						}
 					} 

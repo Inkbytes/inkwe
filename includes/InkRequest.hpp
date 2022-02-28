@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/02/26 18:24:16 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/02/28 21:12:46 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,8 @@
 # include <exception>
 # include "webserv.hpp"
 # include "InkServerConfig.hpp"
-#include <fstream>
+# include <fstream>
+# include <stdio.h>
 
 namespace ft {
 	class request
@@ -50,7 +51,6 @@ namespace ft {
 				int flag = 0;
 				if (method.find('\r')!=std::string::npos)
 					method.erase(method.find('\r'));
-				std::cout << method <<std::endl;
 				splitMethod(method);
 				int pos = splitPath(_path, conf);
 				std::vector<std::string>::iterator ite = myVec.end();
@@ -88,10 +88,29 @@ namespace ft {
 				}
 				if (_details.find("Content-Disposition") != _details.end() && _details.find("Content-Disposition")->second.find("form-data") != std::string::npos)
 				{
-					std::ofstream mfile(conf.getLocations()[pos].getRoot()+"/hello.txt");
+					std::string a = _details.find("Content-Disposition")->second.substr(_details.find("Content-Disposition")->second.find("filename=\"")+10, _details.find("Content-Disposition")->second.length());
+					std::string filename = conf.getLocations()[pos].getRoot()+ "/"+a.substr(0, a.find("\""));
+					std::ofstream mfile(filename);
+					int x = 0;
+
 					for (;it!=ite;it++)
+					{
+						x+= (*it).length()+1;
+						if (x > conf.getBodySizeLimit())
+						{
+							mfile.close();
+							remove(filename.c_str());
+							_complete = 1;
+							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", 400));
+						}
 						mfile << *it;
+					}
 					mfile.close();
+					if (x >= stoi(_details.find("Content-Length")->second))
+						_complete = 1;
+					else
+						_request.clear();
+					return (std::make_pair("HTTP/1.1 201 Created\n", 201));
 				}
 				// set POST body
 				else if (_query.length()==0 && it != ite && _method == "POST") {
@@ -99,7 +118,8 @@ namespace ft {
 					if (_details.find("Transfer-Encoding")->second == "chunked")
 					{
 						std::vector<int> chunck_size;
-						(*it).erase((*it).find('\r'));
+						if ((*it).find('\r')!=std::string::npos)
+							(*it).erase((*it).find('\r'));
 						if (is_chunck_length(*it) == -1)
 							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", 400));
 						else
@@ -109,12 +129,15 @@ namespace ft {
 						}
 						for (;it!=ite;it++)
 						{
-							(*it).erase((*it).find_last_of('\r'));
+							if ((*it).find('\r')!=std::string::npos)
+								(*it).erase((*it).find('\r'));
 							if (is_chunck_length(*it) != -1)
 							{
-								if (is_chunck_length(*it) == 0)
+								if (*it == "0")
 								{
 									_complete = 1;
+									if (_query.length() != total_size(chunck_size))
+										return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n",400));
 									break ;
 								}
 								if (_query.length() > total_size(chunck_size))
@@ -127,13 +150,16 @@ namespace ft {
 							else
 								_query += *it;
 						}
+						if (total_size(chunck_size) >= stoi(_details.find("Content-Length")->second))
+							_complete = 1;
+						else
+							_request.clear();
 					}
 					// simple post
 					else
 					{
 						for (;it!=ite;it++)
 							_query+= *it;
-						std::cout << _query << "   query\n";
 						_complete = 1;
 					}
 					if (_query.length() > conf.getBodySizeLimit())
@@ -151,6 +177,7 @@ namespace ft {
 				}
 				_method = method;
 				_conf = conf;
+				_details.clear();
 			}
 
 			std::pair<std::string, int>	parseReq(ft::ServerConfig conf) {
