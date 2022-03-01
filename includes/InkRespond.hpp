@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/22 09:56:30 by                   #+#    #+#             */
-/*   Updated: 2022/03/01 18:22:43 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/03/01 18:51:40 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -176,8 +176,10 @@ namespace ft {
 					ext = scriptname.substr(scriptname.find('.') + 1, scriptname.length());
 				else
 					ext = "";
-				if (Autoindex.second == 1 && Autoindex.first.length() == 0)	
+				if (Autoindex.second == 1 && Autoindex.first.length() == 0)
+				{
 					_headers.push_back("Content-Disposition: attachment\r\n");
+				}
 				if (req.getMethod()=="DELETE" && _status == "204") {
 					_flag = true;
 					return (std::make_pair(_ret, _ret.length()));
@@ -270,7 +272,7 @@ namespace ft {
 					ft::AutoIndex aut(urlPath, path);
 					if (checkDirOpen(path.c_str())) {
 						return (std::make_pair(aut.baseHref(), 1));
-					} else if (!checkFileOpen(path.c_str())) {
+					} else if (checkFileOpen(path.c_str())) {
 						return (std::make_pair("", 1));
 					}
 				}

@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/03/01 18:28:25 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/03/01 18:47:59 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,8 +83,12 @@ namespace ft {
 						break ;
 					}
 					else
-						if (split(*it, ": ") == -1)
+					{
+						if (split(*it, ": ") == -1){
+							_complete = 1;
 							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", 400));
+						}
+					}
 				}
 				if (_details.find("Content-Disposition") != _details.end() && _details.find("Content-Disposition")->second.find("form-data") != std::string::npos)
 				{
@@ -259,8 +263,10 @@ namespace ft {
 					return (-1);
 				std::string token = text.substr(0, pos);
 				std::string token1 = text.substr(pos + 2, text.length());
-				if (token.empty() || token1.empty() || token[token.length()] == ' ' || _details.find(token) != _details.end())
+				if (token.empty() || token1.empty() || token[token.length()-1] == ' ' || _details.find(token) != _details.end())
+				{
 					return (-1);
+				}
 				_details.insert(std::pair<std::string, std::string>(token, token1));
 				return (1);
 			}

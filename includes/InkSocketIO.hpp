@@ -212,7 +212,6 @@ namespace ft {
 			// std::cout <<"**************************" << std::endl;
 			_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
 			_request_a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
-			
 			if (_reqMap[_fds[i].fd].is_complete())  {
 				_fds[i].events = POLLOUT;
 				_counter = 0;
