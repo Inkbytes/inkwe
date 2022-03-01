@@ -80,6 +80,8 @@ class InkCgi
             bool done = true;
             std::string cgibuffer ="";
             FILE  *file;
+            struct pollfd   fds;
+
             char a;
             args[0] =(char*)_lang.c_str();
             args[1] = (char*)scriptName.c_str();
@@ -96,7 +98,18 @@ class InkCgi
                 if (req.getMethod() == "POST")
                 {
                     dup2(fd1[0],0);
-                    write(fd1[1], req.getQuery().c_str(), req.getQuery().length());
+                    fds.fd = fd1[1];
+                    fds.event = POLLOUT;
+
+                    int rc = poll(&fds, 1, 0);
+
+                    if (rc < 1)
+                        return (std::make_pair("500", "HTTP/1.1 500 Internal Server Error\r\n"));
+                    if (rc == 1) {
+                        if (fds.revents & POLLOUT)
+                            write(fd1[1], req.getQuery().c_str(), req.getQuery().length());
+                    }
+                    
                 }
                 else
                     close(0);
