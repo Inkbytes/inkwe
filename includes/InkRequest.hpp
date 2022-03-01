@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/02/28 21:12:46 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/03/01 18:28:25 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -259,7 +259,7 @@ namespace ft {
 					return (-1);
 				std::string token = text.substr(0, pos);
 				std::string token1 = text.substr(pos + 2, text.length());
-				if (token.empty() || token1.empty())
+				if (token.empty() || token1.empty() || token[token.length()] == ' ' || _details.find(token) != _details.end())
 					return (-1);
 				_details.insert(std::pair<std::string, std::string>(token, token1));
 				return (1);

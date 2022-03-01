@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/22 09:56:30 by                   #+#    #+#             */
-/*   Updated: 2022/02/28 22:09:03 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/03/01 18:22:43 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,29 @@ namespace ft {
 			}
 
 			// Set respond
+			bool	checkFileOpen(const char *file) {
+				int d;
+
+				d = open(file, O_RDONLY);
+
+				if (d == -1)
+					return (false);
+				close(d);
+				return (true);
+			}
+
+			bool		checkDirOpen(const char *path) {
+				DIR *dd;
+
+				dd = nullptr;			
+				dd = opendir(path);
+
+				if (dd == nullptr)
+					return (false);
+				closedir(dd);
+				return (true);
+			}
+			
 			void confRespond(const ft::ServerConfig &conf, const ft::request &req, const std::pair<std::string, int> &a) {
 				_err = 0;
 				_cgi = 0;
@@ -80,7 +103,7 @@ namespace ft {
 						_status = "index.html";
 						_ret = "HTTP/1.1 200 OK\n";
 					}
-					else if (int d=open(file.c_str(),O_RDONLY)==-1)
+					else if (checkFileOpen(file.c_str()) == false)
 					{
 						_status = "404";
 						_ret ="HTTP/1.1 404 Not Found\n";
@@ -245,9 +268,9 @@ namespace ft {
 				
 				if (location.getAutoIndex()) {
 					ft::AutoIndex aut(urlPath, path);
-					if (opendir(path.c_str()) != nullptr) {
+					if (checkDirOpen(path.c_str())) {
 						return (std::make_pair(aut.baseHref(), 1));
-					} else if ((d = open(path.c_str(), O_RDONLY)) != -1) {
+					} else if (!checkFileOpen(path.c_str())) {
 						return (std::make_pair("", 1));
 					}
 				}
