@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/03/01 18:47:59 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/03/02 01:18:43 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,10 @@ namespace ft {
 				std::vector<std::string>::iterator ite = myVec.end();
 				std::vector<std::string>::iterator it = myVec.begin();
 				if (_method != "GET" && _method != "POST" && _method != "DELETE")
+				{
+					_complete = 1;
 					return(std::make_pair("HTTP/1.1 501 Not Implemented", 501));
+				}
 				else
 				{
 					for (int i = 0; i <conf.getLocationsCount(); i++)
@@ -66,10 +69,16 @@ namespace ft {
 								flag =1;
 					}
 					if (flag != 1)
+					{
+						_complete = 1;
 						return (std::make_pair("HTTP/1.1 405 METHOD NOT ALLOWED\n", 405));
+					}
 				}
 				if (_serverProtocol != "HTTP/1.1")
+				{
+					_complete = 1;
 					return (std::make_pair("HTTP/1.1 505 SERVER HTTP VERSION NOT SUPPORTED\n", 505));
+				}
 				// HTTP cache not found
 				
 				// parse every details of the request into a map with akey and value
@@ -125,7 +134,10 @@ namespace ft {
 						if ((*it).find('\r')!=std::string::npos)
 							(*it).erase((*it).find('\r'));
 						if (is_chunck_length(*it) == -1)
+						{
+							_complete = 1;
 							return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n", 400));
+						}
 						else
 						{
 							chunck_size.push_back(is_chunck_length(*it));
@@ -145,7 +157,10 @@ namespace ft {
 									break ;
 								}
 								if (_query.length() > total_size(chunck_size))
+								{
+									_complete = 1;
 									return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n",400));
+								}
 								else if (_query.length() < total_size(chunck_size))
 									_query += *it;
 								else
@@ -167,7 +182,10 @@ namespace ft {
 						_complete = 1;
 					}
 					if (_query.length() > conf.getBodySizeLimit())
+					{
+						_complete = 1;
 						return (std::make_pair("HTTP/1.1 400 BAD REQUEST\n",400));
+					}
 				}
 				else
 					_complete = 1;
@@ -323,31 +341,28 @@ namespace ft {
 	};
 }
 
+// #pragma once
 
+// # include <iostream>
+// # include <map>
+// # include <vector>
+// # include <iterator>
+// # include <exception>
 
+// class request
+// {
+// 	private:
+// 		std::string _method;
+// 		std::string _serverProtocol;
+// 		std::string _path;
+// 		std::string _query;
+// 		std::string _clientIp;
+// 		std::string _scriptName;
+// 		std::map<std::string, std::string> _details;
+// 		bool _complete;
 
-#pragma once
+// 	public:
+// 		request(std::string clientIp) : _clientIp(clientIp), _complete(false) { }
+// 		~request(void) {}
 
-# include <iostream>
-# include <map>
-# include <vector>
-# include <iterator>
-# include <exception>
-
-class request
-{
-	private:
-		std::string _method;
-		std::string _serverProtocol;
-		std::string _path;
-		std::string _query;
-		std::string _clientIp;
-		std::string _scriptName;
-		std::map<std::string, std::string> _details;
-		bool _complete;
-
-	public:
-		request(std::string clientIp) : _clientIp(clientIp), _complete(false) { }
-		~request(void) {}
-
-};
+// };

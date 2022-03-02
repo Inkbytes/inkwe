@@ -115,8 +115,8 @@ namespace ft {
 			int				new_sd;
 
 			// Listening descriptor is readable.
-			std::cout << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Has a incomming connection."
-			<< std::endl;
+			// std::cout << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Has a incomming connection."
+			// << std::endl;
 			
 			// Accept all incoming connections that are
 			// queued up on the listening socket before we
@@ -134,8 +134,8 @@ namespace ft {
 				}
 				// Add the new incoming connection to
 				// the pollfd structure
-				std::cout << "[" << _getTimestamp() << "]: New incoming connection " << new_sd
-				<< std::endl;
+				// std::cout << "[" << _getTimestamp() << "]: New incoming connection " << new_sd
+				// << std::endl;
 				fds.fd = new_sd;
 				fds.events = POLLIN;
 				_fds.push_back(fds);
@@ -186,10 +186,6 @@ namespace ft {
 				return (false);
 			}
 
-			// Data was received
-			std::cout << "[" << _getTimestamp() << "]: " << rc << " Bytes received." << std::endl;
-
-
 			std::stringstream newBuffer(buffer);
 			std::memset(&buffer, 0, sizeof(buffer));
 
@@ -202,14 +198,6 @@ namespace ft {
 				else
 					_reqVec[_fds[i].fd].push_back(myText);
 			}
-			size_t k = 0;
-			// std::cout <<"**************************" << std::endl;
-			// for (size_t a = 10 ; a < _reqVec[_fds[i].fd].size() ; a++) {
-			// 	std::cout << _reqVec[_fds[i].fd][a] << std::endl;
-			// 	k += _reqVec[_fds[i].fd][a].length();
-			// }
-			// std::cout << " SIZE is " << k << std::endl;
-			// std::cout <<"**************************" << std::endl;
 			_reqMap[_fds[i].fd].append(_reqVec[_fds[i].fd], _reqM[_fds[i].fd], socket->getServerConfig());
 			_request_a = _reqMap[_fds[i].fd].parseReq(socket->getServerConfig());
 			if (_reqMap[_fds[i].fd].is_complete())  {
@@ -253,8 +241,10 @@ namespace ft {
 				_resMap[_fds[i].fd].confRespond(socket->getServerConfig(), _reqMap[_fds[i].fd], _request_a);
 				res = _resMap[_fds[i].fd].SetRespond(_reqMap[_fds[i].fd], socket->getServerConfig(), _types, _request_a.second);
 				// std::cout << res.first << std::endl;
+				
 			} else {
 				res = _resMap[_fds[i].fd].readStream();
+				// std::cout << res.first << std::endl;
 			}
 			ret = send(_fds[i].fd, res.first.c_str(), res.second, 0);
 			// std::cout << ret << std::endl;
@@ -372,11 +362,7 @@ namespace ft {
 			do {
 				
 				// Call poll() and wait 3 minutes for it to complete.
-				rc = poll(&_fds.front(), _fds.size(), _timeout);
-
-				// for (int i = 0; i < _fds.size() ; i++) {
-				// 	std::cout << _fds[i].fd << " " << _fds[i].events << " " << _fds[i].revents << std::endl;
-				// }
+				rc = poll(&_fds.front(), _fds.size(), -1);
 				
 				// Check to see if the poll call failed.
 				if (rc < 0) {
@@ -384,24 +370,18 @@ namespace ft {
 					break;
 				}
 
-				// if (rc == 0) {
-				// 	std::cerr << "[" << _getTimestamp() << "]: Error, timeout." << std::endl;
-				// 	break;
-				// }
+				if (rc == 0) {
+					continue;
+				}
 				
-				// One or more descriptors are readable. Need to
-				// determine which ones they are
 				for (int i = 0; i < _fds.size(); i++) {
-					// Loop through to find the descriptors that returned
-					// POLLIN and determine whether it's the listening
-					// or the active connection.
 					if (_fds[i].revents == 0)
 						continue;
 
 					if (_isListenSd(_fds[i].fd)) {
 							_accept_clients(i);
 					} else if (_fds[i].revents & POLLERR || _fds[i].revents & POLLNVAL || _fds[i].revents & POLLHUP) {
-						std::cerr << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Connection closed." << std::endl;
+						// std::cerr << "[" << _getTimestamp() << "]: " << _fds[i].fd << " Connection closed." << std::endl;
 						ft::Socket *socket = _findCd(_fds[i].fd);
 						socket->rmClient(_fds[i].fd);
 						close(_fds[i].fd);

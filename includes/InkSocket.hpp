@@ -124,7 +124,7 @@ namespace ft {
 						return (false);
 					}
 				}
-				std::cout << "[" << getTimestamp() << "]: Client is added successfully." << std::endl;
+				// std::cout << "[" << getTimestamp() << "]: Client is added successfully." << std::endl;
 				_clientsd.push_back(clientsd);
 				return (true);
 			}
@@ -227,7 +227,7 @@ namespace ft {
 				// Set Socket to be non-blocking. All sockets for
 				// the incoming connections will also be non-blocking since
 				// they will inherit that state from the listening socket.
-				if (ioctl(_socketsd, FIONBIO, (char *)&on) < 0) 
+				if (fcntl(_socketsd, F_SETFL, O_NONBLOCK) < 0) 
 				{
 					std::cerr << "[" << getTimestamp() << "]: Ioctl failed." << std::endl;
 					close(_socketsd);

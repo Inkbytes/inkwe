@@ -67,9 +67,9 @@ class InkCgi
             setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
             setenv("REDIRECT_STATUS", "true", 1);
             if (req.getScriptName().find(".php") != std::string::npos)
-                _lang = "/Users/oel-ouar/.brew/bin/php-cgi";
+                _lang = "bin/php-cgi";
             else if (req.getScriptName().find(".py") != std::string::npos)
-                _lang = "/usr/bin/python";
+                _lang = "bin/python";
         }
         
         std::pair<std::string,std::string> execCgi(request req)
@@ -99,7 +99,7 @@ class InkCgi
                 {
                     dup2(fd1[0],0);
                     fds.fd = fd1[1];
-                    fds.event = POLLOUT;
+                    fds.events = POLLOUT;
 
                     int rc = poll(&fds, 1, 0);
 
@@ -107,9 +107,8 @@ class InkCgi
                         return (std::make_pair("500", "HTTP/1.1 500 Internal Server Error\r\n"));
                     if (rc == 1) {
                         if (fds.revents & POLLOUT)
-                            write(fd1[1], req.getQuery().c_str(), req.getQuery().length());
+                        write(fd1[1], req.getQuery().c_str(), req.getQuery().length());
                     }
-                    
                 }
                 else
                     close(0);
@@ -123,6 +122,7 @@ class InkCgi
             else
             {
                 time_t t = time(NULL);
+                struct pollfd fds;
                 while ( time(NULL) - t < 3) {
                     pid_t r = waitpid(pid, &stat, WNOHANG);
                     if (r && r!=-1) 
@@ -131,8 +131,30 @@ class InkCgi
                         close(fd1[0]);
                         close(fd1[1]);
                         file = fdopen(fd[0],"r");
-                        while ((a = fgetc(file)) != EOF)
-                            cgibuffer += a;
+
+                        fds.fd = fileno(file);
+                        fds.events = POLLIN;
+                        while (1) {
+                            int rc = poll(&fds, 1, 0);
+
+                            if (rc < 1)
+                                return (std::make_pair("500", "HTTP/1.1 500 Internal Server Error\r\n"));
+                            if (rc == 1 && fds.revents & POLLIN) {
+                            
+                                int nc = read(fds.fd, &a, 1);
+
+                                if (nc > 0)
+                                    cgibuffer += a;
+                                if (nc == 0)
+                                    break;
+                                if (nc < 0) {
+                                    close(fds.fd);
+                                    fclose(file);
+                                    close(fd[0]);
+                                    return (std::make_pair("500", "HTTP/1.1 500 Internal Server Error\r\n"));
+                                }
+                            }
+                        }
                         fclose(file);
                         close(fd[0]);
                         done = false;

@@ -141,6 +141,7 @@ namespace ft {
 			 * @return none
 			 */
 			explicit AutoIndex( std::string const &urlPath, std::string const &rootPath): _rootPath(rootPath), _urlPath(urlPath) {
+				// std::cout << urlPath << std::endl;
 				if (_rootPath[_rootPath.length() - 1] == '/')
 					_rootPath.erase(_rootPath.length() - 1);
 				if (_urlPath[_urlPath.length() - 1] == '/')
@@ -196,6 +197,7 @@ namespace ft {
 				// TO-DO: Open file and read it's content, then store all folders and files
 				// into the file's data structure.
 
+				
 				// _rootPath.erase(std::remove_if(_rootPath.begin(), _rootPath.end(), isspace), _rootPath.end());
 				if ((rootDir = opendir(_rootPath.c_str())) != nullptr) {
 					// Looping through all directory and files then store their names
@@ -203,20 +205,10 @@ namespace ft {
 					while ((diread = readdir(rootDir)) != nullptr) {
 						std::string dname = std::string(diread->d_name);
 						urlPath = ulrtemp;
+						// std::cout << urlPath << " " << dname << std::endl;
 						if (lstat((_rootPath + "/" + dname).c_str(), &_sb) == -1) {
 							perror("lstat");
-							std::ifstream f;
-							std::string errorRaw;
-							std::stringstream buffer;
-
-							f.open("var/www/pages/500.html");
-							if (!f.good())
-								std::cout << "Can't open file." << std::endl;
-							buffer << f.rdbuf();
-							errorRaw = buffer.str();
-							f.close();
-							buffer.clear();
-							return (errorRaw);
+							return ("HTTP/1.1 500 Internal Server Error\r\n");
 						}
 						_baseHref += "<tr><td><a href='" + _urlPath + "/" + dname + "'>" + dname + "</a></td>" +
 								"<td>" + _getOwnerShip(_sb) + "</td>" +
