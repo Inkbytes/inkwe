@@ -175,7 +175,7 @@ namespace ft {
 			rc = recv(_fds[i].fd, buffer, 1024, 0);
 			// std::cout << buffer << std::endl;
 			if (rc < 0) {
-				std::cout << "Error: recv error." << std::endl;
+				// std::cout << "Error: recv error." << std::endl;
 				return (false);
 			}
 				
@@ -398,7 +398,7 @@ namespace ft {
 							_fds[i].events = POLLHUP;
 							continue;
 						}
-					} 
+					}
 				}
 			} while (!_end_server);
 			// Clean up all of the sockets that are open

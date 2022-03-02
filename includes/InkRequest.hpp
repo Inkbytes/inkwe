@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/21 11:12:47 by                   #+#    #+#             */
-/*   Updated: 2022/03/02 01:18:43 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/03/02 05:04:16 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ namespace ft {
 				if (_method != "GET" && _method != "POST" && _method != "DELETE")
 				{
 					_complete = 1;
-					return(std::make_pair("HTTP/1.1 501 Not Implemented", 501));
+					return(std::make_pair("HTTP/1.1 501 Not Implemented\n", 501));
 				}
 				else
 				{

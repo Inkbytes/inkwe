@@ -6,7 +6,7 @@
 /*   By: oel-ouar <oel-ouar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 12:15:28 by oel-ouar          #+#    #+#             */
-/*   Updated: 2022/02/28 22:06:33 by oel-ouar         ###   ########.fr       */
+/*   Updated: 2022/03/02 05:07:53 by oel-ouar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@
 #include <sys/wait.h>
 #include "InkRequest.hpp"
 #include "InkServerConfig.hpp"
-#include <cerrno>
 #include <signal.h>
 
 extern  char** environ;
@@ -67,7 +66,7 @@ class InkCgi
             setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
             setenv("REDIRECT_STATUS", "true", 1);
             if (req.getScriptName().find(".php") != std::string::npos)
-                _lang = "bin/php-cgi";
+                _lang = "/Users/oel-ouar/.brew/bin/php-cgi";
             else if (req.getScriptName().find(".py") != std::string::npos)
                 _lang = "bin/python";
         }
